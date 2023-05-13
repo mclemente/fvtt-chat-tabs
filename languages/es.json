@@ -1,31 +1,31 @@
 {
-    "I18N.LANGUAGE": "Español",
-    "I18N.MAINTAINERS": "@Viriato139ac#0342",
-  
-    "TC.SETTINGS.OocWebhookName": "Webhook de Discord para los mensajes Como Jugador (en inglés, OOC, Out of Character)",
-    "TC.SETTINGS.OocWebhookHint": "Los Mensajes Como Jugador son siempre globales y no específicos de cada escena",
-    "TC.SETTINGS.IcFallbackWebhookName": "Webhook de Discord para los mensajes Como Personaje (en inglés, In Character) para una escena sin Webhook registrado",
-    "TC.SETTINGS.IcFallbackWebhookHint": "Si no quieres Webhooks por escena, activa esta opción",
+	"I18N.LANGUAGE": "Español",
+	"I18N.MAINTAINERS": "@Viriato139ac#0342",
 
-    "TC.SETTINGS.IcSceneWebhookName": "Webhook de Discord para los mensajes Como Personaje para esta escena",
-    "TC.SETTINGS.IcSceneWebhookHint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
+	"TC.SETTINGS.OocWebhookName": "Webhook de Discord para los mensajes Como Jugador (en inglés, OOC, Out of Character)",
+	"TC.SETTINGS.OocWebhookHint": "Los Mensajes Como Jugador son siempre globales y no específicos de cada escena",
+	"TC.SETTINGS.IcFallbackWebhookName": "Webhook de Discord para los mensajes Como Personaje (en inglés, In Character) para una escena sin Webhook registrado",
+	"TC.SETTINGS.IcFallbackWebhookHint": "Si no quieres Webhooks por escena, activa esta opción",
 
-    "TC.SETTINGS.IcChatInOocName": "Al estar en la pestaña Jugador, ¿deben ser convertidos los mensajes Como Personaje a Como Jugador?",
-    "TC.SETTINGS.IcChatInOocHint": "Es útil para aquellos jugadores que se les olvida usar /ooc",
+	"TC.SETTINGS.IcSceneWebhookName": "Webhook de Discord para los mensajes Como Personaje para esta escena",
+	"TC.SETTINGS.IcSceneWebhookHint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
 
-    "TC.SETTINGS.HideInStreamViewName": "¿Se debe deshabilitar Tabbed Chatlog en la vista FoundryVTT/transmisión?",
-    "TC.SETTINGS.HideInStreamViewHint": "Opción habilitada por defecto",
+	"TC.SETTINGS.IcChatInOocName": "Al estar en la pestaña Jugador, ¿deben ser convertidos los mensajes Como Personaje a Como Jugador?",
+	"TC.SETTINGS.IcChatInOocHint": "Es útil para aquellos jugadores que se les olvida usar /ooc",
 
-    "TC.SETTINGS.PerSceneName": "¿Deben dividirse los mensajes In Character y Roll por escena? ",
-    "TC.SETTINGS.PerSceneHint": "Opción habilitada por defecto",
+	"TC.SETTINGS.HideInStreamViewName": "¿Se debe deshabilitar Tabbed Chatlog en la vista FoundryVTT/transmisión?",
+	"TC.SETTINGS.HideInStreamViewHint": "Opción habilitada por defecto",
 
-    "TC.SETTINGS.AutoNavigateName": "¿Los mensajes nuevos deberían cambiar automáticamente a esa pestaña?",
-    "TC.SETTINGS.AutoNavigateHint": "Por defecto es falsa",
+	"TC.SETTINGS.PerSceneName": "¿Deben dividirse los mensajes In Character y Roll por escena? ",
+	"TC.SETTINGS.PerSceneHint": "Opción habilitada por defecto",
 
-    "TC.SETTINGS.IcWhispersName": "¿Cambiar susurros para que aparezcan en el chat de personaje en lugar de OOC? ",
-    "TC.SETTINGS.IcWhispersHint": "Por defecto es falsa",
+	"TC.SETTINGS.AutoNavigateName": "¿Los mensajes nuevos deberían cambiar automáticamente a esa pestaña?",
+	"TC.SETTINGS.AutoNavigateHint": "Por defecto es falsa",
 
-    "TC.TABS.IC": "Personaje",
-    "TC.TABS.OOC": "Jugador",
-    "TC.TABS.Rolls": "Tiradas"
+	"TC.SETTINGS.IcWhispersName": "¿Cambiar susurros para que aparezcan en el chat de personaje en lugar de OOC? ",
+	"TC.SETTINGS.IcWhispersHint": "Por defecto es falsa",
+
+	"TC.TABS.IC": "Personaje",
+	"TC.TABS.OOC": "Jugador",
+	"TC.TABS.Rolls": "Tiradas"
 }

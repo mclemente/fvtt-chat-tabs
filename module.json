@@ -6,13 +6,9 @@
 	"minimumCoreVersion": "0.8.0",
 	"compatibleCoreVersion": "9",
 	"author": "Cody Swendrowski <cody@swendrowski.us>",
-	"esmodules": [
-		"./tabbed-chatlog.js"
-	],
+	"esmodules": ["./tabbed-chatlog.js"],
 	"scripts": [],
-	"styles": [
-		"/styles/tabbed-chatlog.css"
-	],
+	"styles": ["/styles/tabbed-chatlog.css"],
 	"languages": [
 		{
 			"lang": "en",

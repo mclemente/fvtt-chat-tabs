@@ -1,56 +1,57 @@
 .tabbedchatlog.tabs {
-    flex: 0;
-    margin: 0 0 5px;
-    border-bottom: 1px solid #ff6400;
-    box-shadow: 0 0 10px red;
+	flex: 0;
+	margin: 0 0 5px;
+	border-bottom: 1px solid #ff6400;
+	box-shadow: 0 0 10px red;
 }
 
 .tabbedchatlog .item.active {
-    color: #FFF;
-    border: 1px solid red;
-    border-bottom: none;
-    box-shadow: 0 0 6px inset #ff6400;
-    border-radius: 5px 5px 0 0;
+	color: #fff;
+	border: 1px solid red;
+	border-bottom: none;
+	box-shadow: 0 0 6px inset #ff6400;
+	border-radius: 5px 5px 0 0;
 }
 
-a.item.rolls.active {}
+a.item.rolls.active {
+}
 
 .tabbedchatlog .item {
-    height: 18px;
-    flex: 1;
+	height: 18px;
+	flex: 1;
 }
 
 .type0 {
-    display: none;
+	display: none;
 }
 
 .type1 {
-    display: none;
+	display: none;
 }
 
 .type4 {
-    display: none;
+	display: none;
 }
 
 .type5 {
-    display: none;
+	display: none;
 }
 
 .hardHide {
-    display: none !important;
+	display: none !important;
 }
 
 #icNotification {
-    top: 35px;
-    right: 196px;
+	top: 35px;
+	right: 196px;
 }
 
 #oocNotification {
-    top: 35px;
-    right: 20px;
+	top: 35px;
+	right: 20px;
 }
 
 #rollsNotification {
-    top: 35px;
-    right: 118px;
+	top: 35px;
+	right: 118px;
 }
