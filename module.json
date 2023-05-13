@@ -2,10 +2,19 @@
 	"name": "tabbed-chatlog",
 	"title": "Tabbed Chatlog",
 	"description": "Splits the Chatlog into In Character (per scene), Rolls (per scene), and Out of Character (global).",
-	"version": "1.6.4",
-	"minimumCoreVersion": "0.8.0",
-	"compatibleCoreVersion": "9",
-	"author": "Cody Swendrowski <cody@swendrowski.us>",
+	"version": "2.0",
+	"compatibility": {
+		"minimum": 10,
+		"verified": 11
+	},
+	"authors": [
+		{
+			"name": "Matheus Clemente",
+			"url": "https://github.com/mclemente",
+			"discord": "mclemente#5524",
+			"github": "mclemente"
+		}
+	],
 	"esmodules": ["./tabbed-chatlog.js"],
 	"scripts": [],
 	"styles": ["/styles/tabbed-chatlog.css"],
@@ -43,5 +52,17 @@
 	],
 	"url": "https://github.com/cswendrowski/FoundryVTT-tabbed-chatlog",
 	"manifest": "https://github.com/cswendrowski/FoundryVTT-tabbed-chatlog/releases/download/latest/module.json",
-	"download": "https://github.com/cswendrowski/FoundryVTT-tabbed-chatlog/releases/download/1.6.4/module.zip"
+	"download": "https://github.com/cswendrowski/FoundryVTT-tabbed-chatlog/releases/download/latest/module.zip",
+	"relationships": {
+		"requires": [
+			{
+				"id": "lib-wrapper",
+				"type": "module",
+				"manifest": "https://github.com/ruipin/fvtt-lib-wrapper/releases/latest/download/module.json",
+				"compatibility": {
+					"verified": "1.12.11.0"
+				}
+			}
+		]
+	}
 }

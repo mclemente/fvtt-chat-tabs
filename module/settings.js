@@ -1,0 +1,319 @@
+export const RW_PERMISSIONS = {
+	EMPTY: -1,
+	NONE: 0,
+	READ: 1,
+	READ_WRITE: 2,
+};
+
+export function registerSettings() {
+	game.settings.registerMenu("tabbed-chatlog", "ChatTabsSettings", {
+		name: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
+		label: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
+		icon: "fas fa-comments",
+		type: TabbedChatTabSettings,
+		restricted: true,
+	});
+
+	game.settings.register("tabbed-chatlog", "oocWebhook", {
+		name: game.i18n.localize("TC.SETTINGS.OocWebhookName"),
+		hint: game.i18n.localize("TC.SETTINGS.OocWebhookHint"),
+		scope: "world",
+		config: true,
+		default: "",
+		type: String,
+	});
+
+	// TODO move these onto the ChatTabs class for every tab but rolls
+	game.settings.register("tabbed-chatlog", "icBackupWebhook", {
+		name: game.i18n.localize("TC.SETTINGS.IcFallbackWebhookName"),
+		hint: game.i18n.format("TC.SETTINGS.IcFallbackWebhookHint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") }),
+		scope: "world",
+		config: true,
+		default: "",
+		type: String,
+	});
+
+	game.settings.register("tabbed-chatlog", "icChatInOoc", {
+		name: game.i18n.localize("TC.SETTINGS.IcChatInOocName"),
+		hint: game.i18n.localize("TC.SETTINGS.IcChatInOocHint"),
+		scope: "world",
+		config: true,
+		default: true,
+		type: Boolean,
+	});
+
+	game.settings.register("tabbed-chatlog", "hideInStreamView", {
+		name: game.i18n.localize("TC.SETTINGS.HideInStreamViewName"),
+		hint: game.i18n.localize("TC.SETTINGS.HideInStreamViewHint"),
+		scope: "world",
+		config: true,
+		default: true,
+		type: Boolean,
+	});
+
+	game.settings.register("tabbed-chatlog", "perScene", {
+		name: game.i18n.localize("TC.SETTINGS.PerSceneName"),
+		hint: game.i18n.localize("TC.SETTINGS.PerSceneHint"),
+		scope: "world",
+		config: true,
+		default: true,
+		type: Boolean,
+	});
+
+	game.settings.register("tabbed-chatlog", "autoNavigate", {
+		name: game.i18n.localize("TC.SETTINGS.AutoNavigateName"),
+		hint: game.i18n.localize("TC.SETTINGS.AutoNavigateHint"),
+		scope: "client",
+		config: true,
+		default: false,
+		type: Boolean,
+	});
+
+	game.settings.register("tabbed-chatlog", "tabs", {
+		scope: "world",
+		config: false,
+		default: [
+			{
+				id: "0", // In Character
+				name: game.i18n.localize("TC.TABS.IC"),
+				messageTypes: {
+					IC: true,
+					EMOTE: true,
+				},
+			},
+			{
+				id: "1", // Rolls
+				name: game.i18n.localize("TC.TABS.Rolls"),
+				messageTypes: {
+					OTHER: true,
+					ROLL: true,
+				},
+			},
+			{
+				id: "2", // OOC
+				name: game.i18n.localize("TC.TABS.OOC"),
+				messageTypes: {
+					OOC: true,
+					WHISPER: true,
+				},
+			},
+		],
+		type: Array,
+		requiresReload: true,
+	});
+}
+
+class TabbedChatTabSettings extends FormApplication {
+	constructor(object, options = {}) {
+		super(object, options);
+		this.init();
+	}
+
+	init() {
+		this.tabs = deepClone(game.settings.get("tabbed-chatlog", "tabs"));
+		const chatTab = game.tabbedchat.chatTab.prototype;
+		this.tabs.forEach((tab) => {
+			tab.messageTypes = chatTab.createMessageTypes(tab.messageTypes);
+			tab.permissions = {
+				roles: chatTab.createRolePermissions(tab.permissions?.roles),
+				users: chatTab.createUserPermissions(tab.permissions?.users),
+			};
+		});
+		this.changeTabs = null;
+		this.roles = {
+			PLAYER: game.i18n.localize("USER.RolePlayer"),
+			TRUSTED: game.i18n.localize("USER.RoleTrusted"),
+			ASSISTANT: game.i18n.localize("USER.RoleAssistant"),
+			GAMEMASTER: game.i18n.localize("USER.RoleGamemaster"),
+		};
+		this.levels = {};
+		Object.keys(RW_PERMISSIONS).forEach((key) => {
+			this.levels[[RW_PERMISSIONS[key]]] = key === "EMPTY" ? "" : game.i18n.localize(`TC.PERMISSIONS.${key}`);
+		});
+		Object.keys(this.tabs).forEach((key) => {
+			Object.keys(this.tabs[key].messageTypes).forEach((id) => {
+				this.tabs[key].messageTypes[id] = {
+					label: game.i18n.localize(`TC.MESSAGE_TYPES.${id}.label`),
+					hint: game.i18n.localize(`TC.MESSAGE_TYPES.${id}.hint`),
+					value: this.tabs[key].messageTypes[id] ?? RW_PERMISSIONS.EMPTY,
+				};
+			});
+		});
+		Object.keys(this.tabs).forEach((key) => {
+			Object.keys(this.tabs[key].permissions.roles).forEach((id) => {
+				this.tabs[key].permissions.roles[id] = {
+					label: this.roles[id],
+					value: this.tabs[key].permissions.roles[id] ?? RW_PERMISSIONS.EMPTY,
+				};
+			});
+			Object.keys(this.tabs[key].permissions.users).forEach((id) => {
+				this.tabs[key].permissions.users[id] = {
+					label: game.users.get(id).name,
+					value: this.tabs[key].permissions.users[id] ?? RW_PERMISSIONS.EMPTY,
+				};
+			});
+		});
+	}
+
+	static get defaultOptions() {
+		return mergeObject(super.defaultOptions, {
+			id: "tabbeb-chat-tabs-form",
+			title: `Tabbed Chatlog: ${game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name")}`,
+			template: "./modules/tabbed-chatlog/templates/ChatTabs.hbs",
+			classes: ["form", "tabbed-chat"],
+			width: 640,
+			height: "auto",
+			tabs: [{ navSelector: ".tabs", contentSelector: ".content", initial: "ic" }],
+			closeOnSubmit: true,
+		});
+	}
+
+	get tabStructure() {
+		const chatTab = game.tabbedchat.chatTab.prototype;
+		return {
+			id: this.tabs.length,
+			name: game.i18n.localize("TC.TABS.NewTab"),
+			messageTypes: chatTab.createMessageTypes(),
+			permissions: {
+				roles: chatTab.createRolePermissions(),
+				users: chatTab.createUserPermissions(),
+			},
+		};
+	}
+
+	getData(options) {
+		return {
+			roles: this.roles,
+			levels: this.levels,
+			tabs: this.tabs,
+		};
+	}
+
+	async resetToDefault(key) {
+		const defaultValue = game.settings.settings.get(`tabbed-chatlog.${key}`).default;
+		await game.settings.set("tabbed-chatlog", key, defaultValue);
+	}
+
+	_activateCoreListeners(html) {
+		super._activateCoreListeners(html);
+		if (this.changeTabs) {
+			const tabName = this.changeTabs.toString();
+			if (tabName !== this._tabs[0].active) this._tabs[0].activate(tabName);
+			this.changeTabs = 0;
+		}
+	}
+
+	async activateListeners(html) {
+		super.activateListeners(html);
+
+		html.find("button[name=reset]").on("click", async (event) => {
+			await this.resetToDefault("tabs");
+			this.close();
+		});
+		html.find(".tc-collapse-label").on("click", (event) => {
+			const messageTypeContainer = event.target.nextElementSibling;
+			if (messageTypeContainer.style.display === "none") {
+				messageTypeContainer.style.display = "";
+			} else messageTypeContainer.style.display = "none";
+		});
+
+		// Handle all changes to tables
+		html.find("a[data-action=add-tab]").on("click", (event) => {
+			this.changeTabs = this.tabs.length;
+			const newTab = deepClone(this.tabStructure);
+			Object.keys(newTab.messageTypes).forEach((id) => {
+				newTab.messageTypes[id] = {
+					label: game.i18n.localize(`TC.MESSAGE_TYPES.${id}.label`),
+					hint: game.i18n.localize(`TC.MESSAGE_TYPES.${id}.hint`),
+					value: newTab.messageTypes[id] ?? RW_PERMISSIONS.EMPTY,
+				};
+			});
+			Object.keys(newTab.permissions.roles).forEach((id) => {
+				newTab.permissions.roles[id] = {
+					label: this.roles[id],
+					value: newTab.permissions.roles[id] ?? RW_PERMISSIONS.EMPTY,
+				};
+			});
+			Object.keys(newTab.permissions.users).forEach((id) => {
+				newTab.permissions.users[id] = {
+					label: game.users.get(id).name,
+					value: newTab.permissions.users[id] ?? RW_PERMISSIONS.EMPTY,
+				};
+			});
+			this.tabs.push(newTab);
+			this.render();
+		});
+		html.find("button[data-action=table-delete]").on("click", (event) => {
+			const { key } = event.target?.dataset;
+			this.tabs.splice(Number(key), 1);
+			this.changeTabs = this.tabs.length - 1;
+			this.render();
+		});
+		html.find("button[data-action=change-prio]").on("click", (event) => {
+			const prio = event.target?.dataset.prio === "increase" ? -1 : 1;
+			const key = Number(event.target?.dataset.key);
+
+			const arraymove = (arr, fromIndex, toIndex) => {
+				const element = arr[fromIndex];
+				arr.splice(fromIndex, 1);
+				arr.splice(toIndex, 0, element);
+			};
+
+			arraymove(this.tabs, key, key + prio);
+			this.changeTabs = key + prio;
+			this.render();
+		});
+	}
+
+	_getSubmitData(updateData) {
+		const original = super._getSubmitData(updateData);
+		const data = expandObject(original);
+		const tabs = [];
+		for (const key in data.tabs) {
+			let { id, name, messageTypes, permissions } = data.tabs[key];
+			const messageTypesFilter = Object.keys(messageTypes).filter((key) => messageTypes[key]);
+			if (!messageTypesFilter.length) messageTypes = {};
+			else {
+				messageTypes = Object.assign(
+					...messageTypesFilter.map((key) => ({
+						[key]: messageTypes[key],
+					}))
+				);
+			}
+			permissions.roles = Object.assign(
+				...Object.keys(permissions.roles).map((key) => ({
+					[key]: Number(permissions.roles[key]),
+				}))
+			);
+			permissions.users = Object.assign(
+				...Object.keys(permissions.users).map((key) => ({
+					[key]: Number(permissions.users[key]),
+				}))
+			);
+			tabs.push({
+				id,
+				name,
+				messageTypes,
+				permissions,
+			});
+		}
+		return { tabs };
+	}
+
+	/**
+	 * Executes on form submission
+	 * @param {Event} event - the form submission event
+	 * @param {Object} formData - the form data
+	 */
+	async _updateObject(event, formData) {
+		for (let [k, v] of Object.entries(formData)) {
+			let s = game.settings.settings.get(`tabbed-chatlog.${k}`);
+			let current = game.settings.get(s.namespace, s.key);
+			if (v === current) continue;
+			const requiresClientReload = s.scope === "client" && s.requiresReload;
+			const requiresWorldReload = s.scope === "world" && s.requiresReload;
+			await game.settings.set(s.namespace, s.key, v);
+			if (requiresClientReload || requiresWorldReload) SettingsConfig.reloadConfirm({ world: requiresWorldReload });
+		}
+	}
+}

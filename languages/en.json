@@ -1,28 +1,75 @@
 {
-	"TC.SETTINGS.OocWebhookName": "Discord Webhook for Out of Character chat",
-	"TC.SETTINGS.OocWebhookHint": "OOC Chat is always global and never scene specific",
-	"TC.SETTINGS.IcFallbackWebhookName": "Discord Webhook for In Character chat for a scene without a webhook registered",
-	"TC.SETTINGS.IcFallbackWebhookHint": "If you do not want per-scene webhooks, just set this and move on",
+	"TC": {
+		"SETTINGS": {
+			"ChatTabsSettings": {
+				"name": "Chat Tab Settings",
+				"MessageTypes": "Message Types",
+				"RolePermissions": "Role Permissions",
+				"UserPermissions": "User Permissions"
+			},
+			"OocWebhookName": "Webhook for Out of Character chat",
+			"OocWebhookHint": "OOC Chat is always global and never scene specific",
 
-	"TC.SETTINGS.IcSceneWebhookName": "Discord Webhook for In Character chat for this scene",
-	"TC.SETTINGS.IcSceneWebhookHint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
+			"IC_WARNING": "Do not set more than one chat tab as In Character on the {setting}, otherwise messages from all In Character channels will be sent to it.",
 
-	"TC.SETTINGS.IcChatInOocName": "When in the OOC tab, should In Character chat be converted to OOC chat?",
-	"TC.SETTINGS.IcChatInOocHint": "This is useful for players who forget to use /ooc",
+			"IcFallbackWebhookName": "Webhook for In Character chat",
+			"IcFallbackWebhookHint": "If you don't want webhooks for each scene, just set this one. {warning}",
 
-	"TC.SETTINGS.HideInStreamViewName": "Should Tabbed Chatlog be disabled in the FoundryVTT /stream view?",
-	"TC.SETTINGS.HideInStreamViewHint": "Defaults to True",
+			"IcSceneWebhookName": "Webhook for In Character chat",
+			"IcSceneWebhookHint": "Check the instructions for webhooks on {link}. {warning}",
 
-	"TC.SETTINGS.PerSceneName": "Should In Character and Roll messages be split per Scene?",
-	"TC.SETTINGS.PerSceneHint": "Defaults to True",
+			"IcChatInOocName": "Convert In Character messages to OOC chat",
+			"IcChatInOocHint": "When a player sends a message with the OOC tab active, the message will be posted on that chat instead of the In Character chat. This is useful for players who forget to use /ooc",
 
-	"TC.SETTINGS.AutoNavigateName": "Should new messages automatically swap to that tab?",
-	"TC.SETTINGS.AutoNavigateHint": "Defaults to False",
+			"HideInStreamViewName": "Disable on Stream View",
+			"HideInStreamViewHint": "Disables the module when viewing the game on /stream.",
 
-	"TC.SETTINGS.IcWhispersName": "Swap Whispers to show up in In Character chat instead of OOC?",
-	"TC.SETTINGS.IcWhispersHint": "Defaults to False",
+			"PerSceneName": "Split In Character and Rolls per Scene",
+			"PerSceneHint": "Makes each scene have its own chat.",
 
-	"TC.TABS.IC": "In Character",
-	"TC.TABS.OOC": "OOC",
-	"TC.TABS.Rolls": "Rolls"
+			"AutoNavigateName": "Swap to tab on new messages",
+			"AutoNavigateHint": "If a new message is posted, it'll swap to the tab it was posted.",
+
+			"IcWhispersName": "Swap Whispers to show up in In Character chat instead of OOC?",
+			"IcWhispersHint": "Defaults to False"
+		},
+		"TABS": {
+			"IC": "Token",
+			"OOC": "OOC",
+			"Rolls": "Rolls",
+			"NewTab": "New Tab",
+			"AddTab": "Add Tab"
+		},
+		"MESSAGE_TYPES": {
+			"EMOTE": {
+				"label": "Emote",
+				"hint": "Messages send by the /emote command."
+			},
+			"IC": {
+				"label": "In Character",
+				"hint": "Messages send by users with assigned characters or with owned tokens in a scene."
+			},
+			"OOC": {
+				"label": "Out of Character",
+				"hint": "Messages sent by the /ooc command, or by users without assigned characters or owned tokens in a scene."
+			},
+			"OTHER": {
+				"label": "Other",
+				"hint": "Messages sent without a type defined."
+			},
+			"ROLL": {
+				"label": "Roll",
+				"hint": "Messages sent by the /roll command."
+			},
+			"WHISPER": {
+				"label": "Whisper",
+				"hint": "Messages sent by the /whisper command."
+			}
+		},
+		"PERMISSIONS": {
+			"NONE": "None",
+			"READ": "Read",
+			"READ_WRITE": "Read & Write"
+		}
+	}
 }

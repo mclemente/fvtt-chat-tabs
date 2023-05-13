@@ -3,6 +3,10 @@
 	margin: 0 0 5px;
 	border-bottom: 1px solid #ff6400;
 	box-shadow: 0 0 10px red;
+	min-height: 18px;
+	overflow-x: hidden;
+	overflow-y: hidden;
+	flex-wrap: nowrap;
 }
 
 .tabbedchatlog .item.active {
@@ -13,45 +17,34 @@
 	border-radius: 5px 5px 0 0;
 }
 
-a.item.rolls.active {
-}
-
 .tabbedchatlog .item {
 	height: 18px;
 	flex: 1;
+	white-space: nowrap;
+	min-width: fit-content;
+	padding: 0 5px;
+	position: relative;
 }
 
-.type0 {
-	display: none;
+.tabbedchatlog .notification-pip {
+	position: absolute;
+	top: 0;
+	right: 5px;
 }
 
-.type1 {
-	display: none;
+.form.tabbed-chat .tab-buttons {
+	margin-bottom: 0.5em;
 }
 
-.type4 {
-	display: none;
+.form.tabbed-chat .tab-buttons button:disabled {
+	cursor: default;
+	color: grey;
 }
 
-.type5 {
-	display: none;
+.form.tabbed-chat input[type="number"] {
+	text-align: center;
 }
 
-.hardHide {
-	display: none !important;
-}
-
-#icNotification {
-	top: 35px;
-	right: 196px;
-}
-
-#oocNotification {
-	top: 35px;
-	right: 20px;
-}
-
-#rollsNotification {
-	top: 35px;
-	right: 118px;
+.form.tabbed-chat .tc-collapse-label:hover {
+	text-shadow: 0 0 8px var(--color-shadow-primary);
 }
