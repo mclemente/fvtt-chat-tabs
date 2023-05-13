@@ -17,7 +17,13 @@
 				<div class="form-group">
 					<label>{{localize "Name"}}</label>
 					<input name="tabs.{{key}}.name" id="tabs.{{key}}.name" type="text" value="{{tab.name}}" />
-					<input style="display: none;" name="tabs.{{key}}.id" id="tabs.{{key}}.id" type="text" value="{{tab.id}}" />
+					<input
+						style="display: none;"
+						name="tabs.{{key}}.id"
+						id="tabs.{{key}}.id"
+						type="text"
+						value="{{tab.id}}"
+					/>
 				</div>
 				<h2 class="tc-collapse-label">{{localize "TC.SETTINGS.ChatTabsSettings.MessageTypes"}}</h2>
 				<div>
@@ -60,14 +66,20 @@
 						</button>
 					{{/if}}
 					{{#if (eq @root.tabs.length 1)}}
-						<button disabled type="button" data-action="table-delete" data-key="{{key}}"><i class="fas fa-trash"></i></button>
+						<button disabled type="button" data-action="table-delete" data-key="{{key}}"><i
+								class="fas fa-trash"
+							></i></button>
 					{{else}}
-						<button type="button" data-action="table-delete" data-key="{{key}}"><i class="fas fa-trash"></i></button>
+						<button type="button" data-action="table-delete" data-key="{{key}}"><i
+								class="fas fa-trash"
+							></i></button>
 					{{/if}}
 					{{#if @last}}
 						<button disabled type="button"><i class="far fa-chevron-right"></i></button>
 					{{else}}
-						<button type="button" data-action="change-prio" data-prio="reduce" data-key="{{key}}"><i class="far fa-chevron-right"></i></button>
+						<button type="button" data-action="change-prio" data-prio="reduce" data-key="{{key}}"><i
+								class="far fa-chevron-right"
+							></i></button>
 					{{/if}}
 				</div>
 			</div>

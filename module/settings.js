@@ -354,7 +354,9 @@ class TabbedChatTabSettings extends FormApplication {
 			const requiresClientReload = s.scope === "client" && s.requiresReload;
 			const requiresWorldReload = s.scope === "world" && s.requiresReload;
 			await game.settings.set(s.namespace, s.key, v);
-			if (requiresClientReload || requiresWorldReload) SettingsConfig.reloadConfirm({ world: requiresWorldReload });
+			if (requiresClientReload || requiresWorldReload) {
+				SettingsConfig.reloadConfirm({ world: requiresWorldReload });
+			}
 		}
 	}
 }

@@ -108,7 +108,12 @@ class ChatTab {
 			return false;
 		}
 		const tabExclusiveID = message.flags["tabbed-chatlog"]?.tabExclusive;
-		if (game.settings.get("tabbed-chatlog", "tabExclusive") && tabExclusiveID && game.tabbedchat.currentTab.id !== tabExclusiveID && game.tabbedchat.tabs[tabExclusiveID]) {
+		if (
+			game.settings.get("tabbed-chatlog", "tabExclusive") &&
+			tabExclusiveID &&
+			game.tabbedchat.currentTab.id !== tabExclusiveID &&
+			game.tabbedchat.tabs[tabExclusiveID]
+		) {
 			return false;
 		}
 		if (message.blind && message.whisper.find((element) => element == game.userId) == undefined) return false;
@@ -158,7 +163,12 @@ class TabbedChatlog {
 			if (game.tabbedchat.isStreaming) return;
 			html[0].setAttribute("data-tc-type", data.message.type);
 			if (
-				[CONST.CHAT_MESSAGE_TYPES.OTHER, CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(data.message.type) &&
+				[
+					CONST.CHAT_MESSAGE_TYPES.OTHER,
+					CONST.CHAT_MESSAGE_TYPES.IC,
+					CONST.CHAT_MESSAGE_TYPES.EMOTE,
+					CONST.CHAT_MESSAGE_TYPES.ROLL,
+				].includes(data.message.type) &&
 				data.message.speaker.scene != undefined &&
 				game.settings.get("tabbed-chatlog", "perScene")
 			) {
@@ -185,12 +195,20 @@ class TabbedChatlog {
 
 			const firstValidTab = game.tabbedchat.getValidTab(chatMessage);
 			if (!firstValidTab) return;
-			if (!chatMessage.flags["tabbed-chatlog"]?.tabExclusive && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER) {
+			if (
+				!chatMessage.flags["tabbed-chatlog"]?.tabExclusive &&
+				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
+				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
+			) {
 				chatMessage.updateSource({
 					["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id,
 				});
 			}
-			if (sceneMatches && !game.tabbedchat.currentTab.isMessageVisible(chatMessage) && game.settings.get("tabbed-chatlog", "autoNavigate")) {
+			if (
+				sceneMatches &&
+				!game.tabbedchat.currentTab.isMessageVisible(chatMessage) &&
+				game.settings.get("tabbed-chatlog", "autoNavigate")
+			) {
 				game.tabbedchat.tabsController.activate(firstValidTab, { triggerCallback: true });
 			} else game.tabbedchat.tabs[firstValidTab].setNotification();
 		});
@@ -225,14 +243,21 @@ class TabbedChatlog {
 				chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.currentTab.id });
 			}
 			try {
-				if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC || chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE) {
+				if (
+					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC ||
+					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE
+				) {
 					const scene = game.scenes.get(chatMessage.speaker.scene);
-					const webhook = scene.getFlag("tabbed-chatlog", "webhook") || game.settings.get("tabbed-chatlog", "icBackupWebhook");
+					const webhook =
+						scene.getFlag("tabbed-chatlog", "webhook") ||
+						game.settings.get("tabbed-chatlog", "icBackupWebhook");
 					if (!webhook == undefined || webhook == "") return;
 
 					const speaker = chatMessage.speaker;
 					const actor = loadActorForChatMessage(speaker);
-					const img = `${game.data.addresses.remote}/${actor ? generatePortraitImageElement(actor) : game.users.get(chatMessage.user.id).avatar}`;
+					const img = `${game.data.addresses.remote}/${
+						actor ? generatePortraitImageElement(actor) : game.users.get(chatMessage.user.id).avatar
+					}`;
 					const name = actor ? actor.name : speaker.alias;
 
 					let message = chatMessage.content;
@@ -293,24 +318,38 @@ class TabbedChatlog {
 					const visible = this.currentTab.isMessageTypeVisible(messageType);
 					const perScene = game.settings.get("tabbed-chatlog", "perScene");
 					const tabExclusive = game.settings.get("tabbed-chatlog", "tabExclusive");
-					if ([CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(messageType)) {
+					if (
+						[
+							CONST.CHAT_MESSAGE_TYPES.IC,
+							CONST.CHAT_MESSAGE_TYPES.EMOTE,
+							CONST.CHAT_MESSAGE_TYPES.ROLL,
+						].includes(messageType)
+					) {
 						// selector.filter(".scenespecific").css({ display: "none" });
 						// selector.not(".scenespecific").css({ display: visible ? "" : "none" });
 						// selector.filter(".scene" + game.user.viewedScene).css({ display: visible ? "" : "none" });
 						if (perScene && !tabExclusive) {
 							selector.filter(`[data-tc-scene]`).css({ display: "none" });
-							selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display: visible ? "" : "none" });
+							selector
+								.filter(`[data-tc-scene="${game.user.viewedScene}"]`)
+								.css({ display: visible ? "" : "none" });
 						} else if (!perScene && tabExclusive) {
 							selector.filter(`[data-tc-tab]`).css({ display: "none" });
-							selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display: visible ? "" : "none" });
+							selector
+								.filter(`[data-tc-tab=${this.currentTab.id}]`)
+								.css({ display: visible ? "" : "none" });
 						} else if (perScene && tabExclusive) {
 							selector.filter(`[data-tc-scene]`).css({ display: "none" });
 							selector.filter(`[data-tc-tab]`).css({ display: "none" });
-							selector.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`).css({ display: visible ? "" : "none" });
+							selector
+								.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`)
+								.css({ display: visible ? "" : "none" });
 							for (let message of selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`)) {
 								const tab = message.dataset.tcTab;
 								if (tab && tab !== this.currentTab.id && !this.tabs[tab]) {
-									selector.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${tab}]`).css({ display: visible ? "" : "none" });
+									selector
+										.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${tab}]`)
+										.css({ display: visible ? "" : "none" });
 								}
 							}
 						}
@@ -410,7 +449,8 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 	if (!game.settings.get("tabbed-chatlog", "perScene")) return;
 	let loadedWebhookData = "";
 	if (app.object.compendium) return;
-	if (app.object.flags["tabbed-chatlog"]?.webhook) loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
+	if (app.object.flags["tabbed-chatlog"]?.webhook)
+		loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
 	const fxHtml = `
 	<div class="form-group">
 		<label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhook.name")}</label>
@@ -420,7 +460,10 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 				.format("TC.SETTINGS.IcSceneWebhook.hint", {
 					setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
 				})
-				.replace("---", `<a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">discord's site</a>`)}
+				.replace(
+					"---",
+					`<a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">discord's site</a>`
+				)}
 		</p>
 	</div> `;
 	const fxFind = html.find("select[name ='journal']");
@@ -442,9 +485,15 @@ Hooks.on("init", () => {
 		async function () {
 			return Dialog.confirm({
 				title: game.i18n.localize("CHAT.FlushTitle"),
-				content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.localize("CHAT.FlushWarning")}</p>`,
+				content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.localize(
+					"CHAT.FlushWarning"
+				)}</p>`,
 				yes: () => {
-					ChatMessage.deleteDocuments([...game.messages].filter((entity) => game.tabbedchat.currentTab.isMessageVisible(entity)).map((message) => message.id));
+					ChatMessage.deleteDocuments(
+						[...game.messages]
+							.filter((entity) => game.tabbedchat.currentTab.isMessageVisible(entity))
+							.map((message) => message.id)
+					);
 					const jumpToBottomElement = document.querySelector(".jump-to-bottom");
 					jumpToBottomElement.classList.toggle("hidden", true);
 				},
