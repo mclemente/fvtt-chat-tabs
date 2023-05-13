@@ -1,26 +1,26 @@
 {
-	"TC.SETTINGS.OocWebhookName": "用於超遊聊天的Discord Webhook",
-	"TC.SETTINGS.OocWebhookHint": "超遊聊天始終發送到全局並且和場景無關",
-	"TC.SETTINGS.IcFallbackWebhookName": "未註冊Webhook的用於場景內角色聊天的Discord Webhook",
-	"TC.SETTINGS.IcFallbackWebhookHint": "如果你不想對每個場景設置Webhook，設定該選項繼續即可",
+	"TC.SETTINGS.OocWebhook.name": "用於超遊聊天的Discord Webhook",
+	"TC.SETTINGS.OocWebhook.hint": "超遊聊天始終發送到全局並且和場景無關",
+	"TC.SETTINGS.IcFallbackWebhook.name": "未註冊Webhook的用於場景內角色聊天的Discord Webhook",
+	"TC.SETTINGS.IcFallbackWebhook.hint": "如果你不想對每個場景設置Webhook，設定該選項繼續即可",
 
-	"TC.SETTINGS.IcSceneWebhookName": "用於該場景內角色聊天的Discord Webhook",
-	"TC.SETTINGS.IcSceneWebhookHint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
+	"TC.SETTINGS.IcSceneWebhook.name": "用於該場景內角色聊天的Discord Webhook",
+	"TC.SETTINGS.IcSceneWebhook.hint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
 
-	"TC.SETTINGS.IcChatInOocName": "切在超遊面板時，角色聊天自動轉換成超遊聊天嗎？",
-	"TC.SETTINGS.IcChatInOocHint": "幫助一個忘記使用/ooc的玩家",
+	"TC.SETTINGS.IcChatInOoc.name": "切在超遊面板時，角色聊天自動轉換成超遊聊天嗎？",
+	"TC.SETTINGS.IcChatInOoc.hint": "幫助一個忘記使用/ooc的玩家",
 
-	"TC.SETTINGS.HideInStreamViewName": "在FoundryVTT的/stream瀏覽模式下禁用Tabbed Chatlog？",
-	"TC.SETTINGS.HideInStreamViewHint": "默認禁用",
+	"TC.SETTINGS.HideInStreamView.name": "在FoundryVTT的/stream瀏覽模式下禁用Tabbed Chatlog？",
+	"TC.SETTINGS.HideInStreamView.hint": "默認禁用",
 
-	"TC.SETTINGS.PerSceneName": "是否应按场景拆分“角色和角色”消息？",
-	"TC.SETTINGS.PerSceneHint": "默認禁用",
+	"TC.SETTINGS.PerScene.name": "是否应按场景拆分“角色和角色”消息？",
+	"TC.SETTINGS.PerScene.hint": "默認禁用",
 
-	"TC.SETTINGS.AutoNavigateName": "新消息應該自動交換到該選項卡嗎？",
-	"TC.SETTINGS.AutoNavigateHint": "默认为错误的",
+	"TC.SETTINGS.AutoNavigate.name": "新消息應該自動交換到該選項卡嗎？",
+	"TC.SETTINGS.AutoNavigate.hint": "默认为错误的",
 
-	"TC.SETTINGS.IcWhispersName": "交換低語以顯示在“角色內聊天”中而不是OOC中？ ",
-	"TC.SETTINGS.IcWhispersHint": "默认为错误的",
+	"TC.SETTINGS.IcWhispers.name": "交換低語以顯示在“角色內聊天”中而不是OOC中？ ",
+	"TC.SETTINGS.IcWhispers.hint": "默认为错误的",
 
 	"TC.TABS.IC": "角色",
 	"TC.TABS.OOC": "超遊",

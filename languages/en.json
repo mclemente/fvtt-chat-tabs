@@ -7,31 +7,34 @@
 				"RolePermissions": "Role Permissions",
 				"UserPermissions": "User Permissions"
 			},
-			"OocWebhookName": "Webhook for Out of Character chat",
-			"OocWebhookHint": "OOC Chat is always global and never scene specific",
+			"OocWebhook.name": "Webhook for Out of Character chat",
+			"OocWebhook.hint": "OOC Chat is always global and never scene specific",
 
-			"IC_WARNING": "Do not set more than one chat tab as In Character on the {setting}, otherwise messages from all In Character channels will be sent to it.",
+			"IcFallbackWebhook.name": "Webhook for In Character chat",
+			"IcFallbackWebhook.hint": "This is a fallback webhook if you don't set any scene webhooks. Do not set more than one chat tab as In Character on the {setting}, otherwise messages from all In Character channels will be sent to it.",
 
-			"IcFallbackWebhookName": "Webhook for In Character chat",
-			"IcFallbackWebhookHint": "If you don't want webhooks for each scene, just set this one. {warning}",
+			"IcSceneWebhook.name": "Webhook for In Character chat",
+			"IcSceneWebhook.hint": "Check the instructions for webhooks on ---. Do not set more than one chat tab as In Character on the {setting}, otherwise messages from all In Character channels will be sent to it.",
 
-			"IcSceneWebhookName": "Webhook for In Character chat",
-			"IcSceneWebhookHint": "Check the instructions for webhooks on {link}. {warning}",
+			"IcChatInOoc.name": "Convert In Character messages to OOC chat",
+			"IcChatInOoc.hint": "When a player sends a message with the OOC tab active, the message will be posted on that chat instead of the In Character chat. This is useful for players who forget to use /ooc.",
 
-			"IcChatInOocName": "Convert In Character messages to OOC chat",
-			"IcChatInOocHint": "When a player sends a message with the OOC tab active, the message will be posted on that chat instead of the In Character chat. This is useful for players who forget to use /ooc",
+			"HideInStreamView.name": "Disable on Stream View",
+			"HideInStreamView.hint": "Disables the chat tabs when viewing the game on /stream.",
 
-			"HideInStreamViewName": "Disable on Stream View",
-			"HideInStreamViewHint": "Disables the module when viewing the game on /stream.",
+			"PerScene.name": "Split In Character and Rolls per Scene",
+			"PerScene.hint": "Makes each scene have its own chat. This also enables adding Webhooks for each scene through the Scene Configuration dialog.",
 
-			"PerSceneName": "Split In Character and Rolls per Scene",
-			"PerSceneHint": "Makes each scene have its own chat.",
+			"AutoNavigate.name": "Swap to tab on new messages",
+			"AutoNavigate.hint": "If a new message is posted, it'll swap to the tab it was posted.",
 
-			"AutoNavigateName": "Swap to tab on new messages",
-			"AutoNavigateHint": "If a new message is posted, it'll swap to the tab it was posted.",
+			"IcWhispers.name": "Swap Whispers to show up in In Character chat instead of OOC?",
+			"IcWhispers.hint": "Defaults to False",
 
-			"IcWhispersName": "Swap Whispers to show up in In Character chat instead of OOC?",
-			"IcWhispersHint": "Defaults to False"
+			"tabExclusive": {
+				"name": "Tab-exclusive Messages",
+				"hint": "Makes messages exclusive to the chat tab they were posted. Only exceptions are OOC and Whisper messages. The message is assigned to the tab's ID, not it's name, so beware with deleting tabs."
+			}
 		},
 		"TABS": {
 			"IC": "Token",
