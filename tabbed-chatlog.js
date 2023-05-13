@@ -7,12 +7,7 @@ class ChatTab {
 		this.name = name;
 		this.messageTypes = this.createMessageTypes(messageTypes);
 		const roles = this.createRolePermissions(permissions.roles);
-		let users = {};
-		if (window.location.href.includes("forge-vtt.com") && !game.ready) {
-			Hooks.on("ready", () => {
-				this.permissions.users = this.createUserPermissions(permissions.users);
-			});
-		} else users = this.createUserPermissions(permissions.users);
+		const users = this.createUserPermissions(permissions.users);
 		this.permissions = {
 			roles,
 			users,
@@ -41,27 +36,33 @@ class ChatTab {
 		);
 	}
 	createUserPermissions(users = {}) {
+		const usersSetting = game.settings.get("tabbed-chatlog", "users");
 		return mergeObject(
 			Object.assign(
-				Array.from(game.users.keys())
-					.filter((key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER)
-					.reduce(
-						(acc, value) => ({
-							...acc,
-							[value]: RW_PERMISSIONS.EMPTY,
-						}),
-						{}
-					)
+				usersSetting.reduce(
+					(acc, value) => ({
+						...acc,
+						[value]: RW_PERMISSIONS.EMPTY,
+					}),
+					{}
+				)
 			),
 			users
 		);
 	}
 
-	getUserPermission() {
-		const userId = game.userId;
+	getUserPermission(userId = game.userId) {
+		if (typeof userId !== "string") {
+			throw new Error("Tabbed Chatlog | getUserPermission: userId must be a string");
+		}
+
 		let role = game.users.get(userId).role;
 		if (role === 4) return 2;
-		if (this.permissions.users[userId] !== -1) return this.permissions.users[userId];
+
+		if (this.permissions.users[userId] && this.permissions.users[userId] !== -1) {
+			return this.permissions.users[userId];
+		}
+
 		let rolePerms = -1;
 		for (role; role > 0; role--) {
 			const roleName = CONST.USER_ROLE_NAMES[role];
@@ -73,12 +74,12 @@ class ChatTab {
 		return rolePerms;
 	}
 
-	canUserWrite() {
-		return this.getUserPermission() > 1;
+	canUserWrite(userId = game.userId) {
+		return this.getUserPermission(userId) > 1;
 	}
 
-	isTabVisible() {
-		return this.getUserPermission() > 0;
+	isTabVisible(userId = game.userId) {
+		return this.getUserPermission(userId) > 0;
 	}
 
 	/**
@@ -286,12 +287,10 @@ class TabbedChatlog {
 			}
 		});
 
-		if (window.location.href.includes("forge-vtt.com")) {
-			Hooks.on("changeSidebarTab", (sidebar) => {
-				if (sidebar.tabName !== "chat") return;
-				this.tabsController.activate(this.currentTab.id, { triggerCallback: true });
-			});
-		}
+		Hooks.on("changeSidebarTab", (sidebar) => {
+			if (sidebar.tabName !== "chat") return;
+			this.tabsController.activate(this.currentTab.id, { triggerCallback: true });
+		});
 	}
 
 	get currentTab() {
@@ -304,6 +303,16 @@ class TabbedChatlog {
 		if (this._currentTab) this._currentTab.active = false;
 		$(`#${tab.id}Notification`).css({ display: "none" });
 		this._currentTab = tab;
+	}
+
+	getTabByID(tabId) {
+		if (typeof tabId !== "string") {
+			throw new Error("Tabbed Chatlog | getTabByID: tabId must be a string");
+		}
+		for (const tab of this.tabs) {
+			if (tab.id === tabId) return tab;
+		}
+		return null;
 	}
 
 	bindHTML(html) {
@@ -345,10 +354,10 @@ class TabbedChatlog {
 								.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`)
 								.css({ display: visible ? "" : "none" });
 							for (let message of selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`)) {
-								const tab = message.dataset.tcTab;
-								if (tab && tab !== this.currentTab.id && !this.tabs[tab]) {
+								const tabId = message.dataset.tcTab;
+								if (tabId && !this.getTabByID(tabId) && tabId !== this.currentTab.id) {
 									selector
-										.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${tab}]`)
+										.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab="${tabId}"]`)
 										.css({ display: visible ? "" : "none" });
 								}
 							}
@@ -363,7 +372,6 @@ class TabbedChatlog {
 				};
 
 				Object.values(CONST.CHAT_MESSAGE_TYPES).forEach((value) => {
-					// const selector = $(`.tabbed-chatlog${value}`);
 					const selector = $(`[data-tc-type=${value}]`);
 					if (selector.length) setVisibility(selector, value);
 				});
@@ -440,9 +448,7 @@ function loadActorForChatMessage(speaker) {
 }
 
 function generatePortraitImageElement(actor) {
-	let img = "";
-	img = actor.token ? actor.token.img : actor.token.img;
-	return img;
+	return actor.token ? actor.token.img : actor.token.img;
 }
 
 Hooks.on("renderSceneConfig", (app, html, data) => {
@@ -520,4 +526,11 @@ Hooks.on("setup", () => {
 
 Hooks.on("ready", () => {
 	if (game.modules.get("narrator-tools")?.active) NarratorTools._msgtype = 2;
+	// TODO remove this on Foundry V11
+	if (game.user.isGM && game.users) {
+		const users = Array.from(game.users.keys()).filter(
+			(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
+		);
+		game.settings.set("tabbed-chatlog", "users", users);
+	}
 });
