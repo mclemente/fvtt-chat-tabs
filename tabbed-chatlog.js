@@ -75,6 +75,7 @@ class ChatTab {
 	}
 
 	/**
+	 * Returns if the message type is visible on the tab.
 	 * @param {Number} messageType
 	 * @returns {Boolean}
 	 */
@@ -83,12 +84,28 @@ class ChatTab {
 		return this.messageTypes[type];
 	}
 
+	/**
+	 * Returns if the message is visible on the tab.
+	 * @param {Object} message
+	 * @returns {Boolean}
+	 */
 	isMessageVisible(message) {
 		const messageType = message.data.type;
 		if (!this.isMessageTypeVisible(messageType)) return false;
-		if (message.data.speaker.scene && game.settings.get("tabbed-chatlog", "perScene")) {
-			if ((messageType == CONST.CHAT_MESSAGE_TYPES.IC || messageType == CONST.CHAT_MESSAGE_TYPES.EMOTE) && message.data.speaker.scene != game.user.viewedScene) return false;
+		if (
+			message.data.speaker.scene &&
+			game.settings.get("tabbed-chatlog", "perScene") &&
+			(messageType == CONST.CHAT_MESSAGE_TYPES.IC || messageType == CONST.CHAT_MESSAGE_TYPES.EMOTE) &&
+			message.data.speaker.scene != game.user.viewedScene
+		) {
+			return false;
 		}
+		if (
+			game.settings.get("tabbed-chatlog", "tabExclusive") &&
+			message.flags["tabbed-chatlog"]?.tabExclusive &&
+			game.tabbedchat.currentTab.id !== message.flags["tabbed-chatlog"]?.tabExclusive
+		)
+			return false;
 		if (message.data.blind && message.data.whisper.find((element) => element == game.userId) == undefined) return false;
 		return true;
 	}
@@ -139,12 +156,15 @@ class TabbedChatlog {
 
 				const setVisibility = (selector, messageType) => {
 					const visible = this.currentTab.isMessageTypeVisible(messageType);
+					const tabExclusive = game.settings.get("tabbed-chatlog", "tabExclusive");
 					if ([CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(messageType)) {
 						// selector.filter(".scenespecific").css({ display: "none" });
 						// selector.not(".scenespecific").css({ display: visible ? "" : "none" });
 						// selector.filter(".scene" + game.user.viewedScene).css({ display: visible ? "" : "none" });
 						selector.filter(`[data-tc-scene]`).css({ display: "none" });
 						selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display: visible ? "" : "none" });
+						selector.filter(`[data-tc-tab]`).css({ display: tabExclusive ? "none" : "" });
+						selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display: visible ? "" : "none" });
 						if (messageType === CONST.CHAT_MESSAGE_TYPES.ROLL) {
 							selector.filter(".gm-roll-hidden").attr("hidden", true);
 						}
@@ -182,11 +202,10 @@ class TabbedChatlog {
 		return toPrepend;
 	}
 
-	getValidTab(messageType) {
-		let tabs = Object.keys(this.tabs).find((key) => {
-			return this.tabs[key].isMessageTypeVisible(messageType);
+	getValidTab(message) {
+		return Object.keys(this.tabs).find((key) => {
+			return this.tabs[key].isMessageVisible(message);
 		});
-		return tabs;
 	}
 
 	get isStreaming() {
@@ -209,14 +228,22 @@ Hooks.on("renderChatLog", async function (chatLog, html, user) {
 });
 
 Hooks.on("renderChatMessage", (chatMessage, html, data) => {
+	//TODO handle tab-exclusive messages
+	//TODO handle tabs that were excluded
 	if (game.tabbedchat.isStreaming) return;
 	html[0].setAttribute("data-tc-type", data.message.type);
-	if ([CONST.CHAT_MESSAGE_TYPES.OTHER, CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(data.message.type)) {
-		if (data.message.speaker.scene != undefined && game.settings.get("tabbed-chatlog", "perScene")) {
-			html[0].setAttribute("data-tc-scene", data.message.speaker.scene);
-		}
+	if (
+		[CONST.CHAT_MESSAGE_TYPES.OTHER, CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(data.message.type) &&
+		data.message.speaker.scene != undefined &&
+		game.settings.get("tabbed-chatlog", "perScene")
+	) {
+		html[0].setAttribute("data-tc-scene", data.message.speaker.scene);
 	}
-	if (!game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type)) html.css({ display: "none" });
+	if (chatMessage.flags["tabbed-chatlog"]?.tabExclusive) {
+		html[0].setAttribute("data-tc-tab", chatMessage.flags["tabbed-chatlog"]?.tabExclusive);
+	}
+
+	if (!game.tabbedchat.currentTab.isMessageVisible(chatMessage)) html.css({ display: "none" });
 });
 
 Hooks.on("diceSoNiceRollComplete", (id) => {
@@ -228,13 +255,15 @@ Hooks.on("diceSoNiceRollComplete", (id) => {
 
 Hooks.on("createChatMessage", (chatMessage, content) => {
 	const sceneMatches = !chatMessage.speaker.scene || chatMessage.speaker.scene === game.user?.viewedScene;
-	const currentTab = game.TabbedChatlog.currentTab;
+	const currentTab = game.tabbedchat.currentTab;
 	if (sceneMatches && currentTab.isMessageTypeVisible(chatMessage.type)) return;
 
-	const firstValidTab = game.tabbedchat.getValidTab(chatMessage.type);
+	const firstValidTab = game.tabbedchat.getValidTab(chatMessage);
 	if (!firstValidTab) return;
-
-	if (sceneMatches && !game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type) && game.settings.get("tabbed-chatlog", "autoNavigate")) {
+	if (!chatMessage.flags["tabbed-chatlog"]?.tabExclusive && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER) {
+		chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id });
+	}
+	if (sceneMatches && !game.tabbedchat.currentTab.isMessageVisible(chatMessage) && game.settings.get("tabbed-chatlog", "autoNavigate")) {
 		game.tabbedchat.tabsController.activate(firstValidTab, { triggerCallback: true });
 	} else game.tabbedchat.tabs[firstValidTab].setNotification();
 });
@@ -256,6 +285,13 @@ Hooks.on("preCreateChatMessage", (chatMessage, content) => {
 	}
 
 	if (chatMessage.whisper?.length) return;
+	if (
+		game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type) &&
+		chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
+		chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
+	) {
+		chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.currentTab.id });
+	}
 	try {
 		if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC || chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE) {
 			const scene = game.scenes.get(chatMessage.speaker.scene);
@@ -338,6 +374,7 @@ function generatePortraitImageElement(actor) {
 }
 
 Hooks.on("renderSceneConfig", (app, html, data) => {
+	if (!game.settings.get("tabbed-chatlog", "perScene")) return;
 	let loadedWebhookData = "";
 	if (app.object.compendium) return;
 	if (app.object.data.flags["tabbed-chatlog"]?.webhook) loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");

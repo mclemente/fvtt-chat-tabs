@@ -72,6 +72,18 @@ export function registerSettings() {
 		type: Boolean,
 	});
 
+	game.settings.register("tabbed-chatlog", "tabExclusive", {
+		name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
+		hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
+		scope: "client",
+		config: true,
+		default: false,
+		type: Boolean,
+		onChange: () => {
+			game.tabbedchat.tabsController.activate(game.tabbedchat.currentTab.id, { triggerCallback: true });
+		},
+	});
+
 	game.settings.register("tabbed-chatlog", "tabs", {
 		scope: "world",
 		config: false,
@@ -85,7 +97,7 @@ export function registerSettings() {
 				},
 			},
 			{
-				id: "1", // Rolls
+				id: "Q444x8op9CbsAd0u",
 				name: game.i18n.localize("TC.TABS.Rolls"),
 				messageTypes: {
 					OTHER: true,
@@ -93,7 +105,7 @@ export function registerSettings() {
 				},
 			},
 			{
-				id: "2", // OOC
+				id: "cHJ0rSy4uxtIjZwU", // OOC
 				name: game.i18n.localize("TC.TABS.OOC"),
 				messageTypes: {
 					OOC: true,
@@ -174,7 +186,7 @@ class TabbedChatTabSettings extends FormApplication {
 	get tabStructure() {
 		const chatTab = game.tabbedchat.chatTab.prototype;
 		return {
-			id: this.tabs.length,
+			id: randomID(),
 			name: game.i18n.localize("TC.TABS.NewTab"),
 			messageTypes: chatTab.createMessageTypes(),
 			permissions: {
