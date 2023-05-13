@@ -6,9 +6,16 @@ class ChatTab {
 		this.id = id;
 		this.name = name;
 		this.messageTypes = this.createMessageTypes(messageTypes);
+		const roles = this.createRolePermissions(permissions.roles);
+		let users = {};
+		if (window.location.href.includes("forge-vtt.com") && !game.ready) {
+			Hooks.on("ready", () => {
+				this.permissions.users = this.createUserPermissions(permissions.users);
+			});
+		} else users = this.createUserPermissions(permissions.users);
 		this.permissions = {
-			roles: this.createRolePermissions(permissions.roles),
-			users: this.createUserPermissions(permissions.users),
+			roles,
+			users,
 		};
 	}
 
@@ -90,23 +97,21 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	isMessageVisible(message) {
-		const messageType = message.data.type;
+		const messageType = message.type;
 		if (!this.isMessageTypeVisible(messageType)) return false;
 		if (
-			message.data.speaker.scene &&
+			message.speaker.scene &&
 			game.settings.get("tabbed-chatlog", "perScene") &&
 			(messageType == CONST.CHAT_MESSAGE_TYPES.IC || messageType == CONST.CHAT_MESSAGE_TYPES.EMOTE) &&
-			message.data.speaker.scene != game.user.viewedScene
+			message.speaker.scene != game.user.viewedScene
 		) {
 			return false;
 		}
-		if (
-			game.settings.get("tabbed-chatlog", "tabExclusive") &&
-			message.flags["tabbed-chatlog"]?.tabExclusive &&
-			game.tabbedchat.currentTab.id !== message.flags["tabbed-chatlog"]?.tabExclusive
-		)
+		const tabExclusiveID = message.flags["tabbed-chatlog"]?.tabExclusive;
+		if (game.settings.get("tabbed-chatlog", "tabExclusive") && tabExclusiveID && game.tabbedchat.currentTab.id !== tabExclusiveID && game.tabbedchat.tabs[tabExclusiveID]) {
 			return false;
-		if (message.data.blind && message.data.whisper.find((element) => element == game.userId) == undefined) return false;
+		}
+		if (message.blind && message.whisper.find((element) => element == game.userId) == undefined) return false;
 		return true;
 	}
 
@@ -134,14 +139,144 @@ class TabbedChatlog {
 
 	chatTab = ChatTab;
 
+	initHooks() {
+		Hooks.on("renderChatLog", async function (chatLog, html, user) {
+			if (game.tabbedchat.isStreaming) return;
+			html.prepend(game.tabbedchat.html);
+			game.tabbedchat.bindHTML(html[0]);
+			if (!game.tabbedchat.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
+			const tabbedchat = document.querySelector(".tabbedchatlog");
+			tabbedchat.addEventListener("wheel", (event) => {
+				event.preventDefault();
+				tabbedchat.scrollBy({
+					left: event.deltaY < 0 ? -30 : 30,
+				});
+			});
+		});
+
+		Hooks.on("renderChatMessage", (chatMessage, html, data) => {
+			if (game.tabbedchat.isStreaming) return;
+			html[0].setAttribute("data-tc-type", data.message.type);
+			if (
+				[CONST.CHAT_MESSAGE_TYPES.OTHER, CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(data.message.type) &&
+				data.message.speaker.scene != undefined &&
+				game.settings.get("tabbed-chatlog", "perScene")
+			) {
+				html[0].setAttribute("data-tc-scene", data.message.speaker.scene);
+			}
+			if (chatMessage.flags["tabbed-chatlog"]?.tabExclusive) {
+				html[0].setAttribute("data-tc-tab", chatMessage.flags["tabbed-chatlog"]?.tabExclusive);
+			}
+
+			if (!game.tabbedchat.currentTab.isMessageVisible(chatMessage)) html.css({ display: "none" });
+		});
+
+		Hooks.on("diceSoNiceRollComplete", (id) => {
+			const currentTab = game.tabbedchat.currentTab;
+			if (!currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.ROLL)) {
+				$(`#chat-log .message[data-message-id=${id}]`).css({ display: "none" });
+			}
+		});
+
+		Hooks.on("createChatMessage", (chatMessage, content) => {
+			const sceneMatches = !chatMessage.speaker.scene || chatMessage.speaker.scene === game.user?.viewedScene;
+			const currentTab = game.tabbedchat.currentTab;
+			if (sceneMatches && currentTab.isMessageTypeVisible(chatMessage.type)) return;
+
+			const firstValidTab = game.tabbedchat.getValidTab(chatMessage);
+			if (!firstValidTab) return;
+			if (!chatMessage.flags["tabbed-chatlog"]?.tabExclusive && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER) {
+				chatMessage.updateSource({
+					["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id,
+				});
+			}
+			if (sceneMatches && !game.tabbedchat.currentTab.isMessageVisible(chatMessage) && game.settings.get("tabbed-chatlog", "autoNavigate")) {
+				game.tabbedchat.tabsController.activate(firstValidTab, { triggerCallback: true });
+			} else game.tabbedchat.tabs[firstValidTab].setNotification();
+		});
+
+		Hooks.on("preCreateChatMessage", (chatMessage, content) => {
+			if (
+				game.settings.get("tabbed-chatlog", "icChatInOoc") &&
+				chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC &&
+				game.tabbedchat.currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.OOC) &&
+				!game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type)
+			) {
+				chatMessage._source.type = CONST.CHAT_MESSAGE_TYPES.OOC;
+				chatMessage.type = CONST.CHAT_MESSAGE_TYPES.OOC;
+				content.type = CONST.CHAT_MESSAGE_TYPES.OOC;
+				content.speaker = undefined;
+				const speaker = {
+					actor: null,
+					alias: undefined,
+					scene: null,
+					token: null,
+				};
+				chatMessage.speaker = speaker;
+				chatMessage._source.speaker = speaker;
+			}
+
+			if (chatMessage.whisper?.length) return;
+			if (
+				game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type) &&
+				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
+				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
+			) {
+				chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.currentTab.id });
+			}
+			try {
+				if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC || chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE) {
+					const scene = game.scenes.get(chatMessage.speaker.scene);
+					const webhook = scene.getFlag("tabbed-chatlog", "webhook") || game.settings.get("tabbed-chatlog", "icBackupWebhook");
+					if (!webhook == undefined || webhook == "") return;
+
+					const speaker = chatMessage.speaker;
+					const actor = loadActorForChatMessage(speaker);
+					const img = `${game.data.addresses.remote}/${actor ? generatePortraitImageElement(actor) : game.users.get(chatMessage.user.id).avatar}`;
+					const name = actor ? actor.name : speaker.alias;
+
+					let message = chatMessage.content;
+					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(message);
+					sendToDiscord(webhook, {
+						content: game.tabbedchat.turndown.turndown(message),
+						username: name,
+						avatar_url: img,
+					});
+				} else if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC) {
+					const webhook = game.settings.get("tabbed-chatlog", "oocWebhook");
+					if (webhook == undefined || webhook == "") return;
+
+					const img = `${game.data.addresses.remote}/${game.users.get(chatMessage.user.id).avatar}`;
+
+					let message = chatMessage.content;
+					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(message);
+					sendToDiscord(webhook, {
+						content: game.tabbedchat.turndown.turndown(message),
+						username: game.users.get(chatMessage.user.id).name,
+						avatar_url: img,
+					});
+				}
+			} catch (error) {
+				console.error(`Tabbed Chatlog | Error trying to send message through the webhook.`, error);
+			}
+		});
+
+		if (window.location.href.includes("forge-vtt.com")) {
+			Hooks.on("changeSidebarTab", (sidebar) => {
+				if (sidebar.tabName !== "chat") return;
+				this.tabsController.activate(this.currentTab.id, { triggerCallback: true });
+			});
+		}
+	}
+
 	get currentTab() {
 		return this._currentTab;
 	}
 	set currentTab(tab) {
-		if (this._currentTab) this._currentTab.active = false;
 		if (typeof tab === "string") tab = this.tabs.find((key) => key.id === tab);
 		else if (typeof tab === "number") tab = this.tabs[tab];
 		tab.active = true;
+		if (this._currentTab) this._currentTab.active = false;
 		$(`#${tab.id}Notification`).css({ display: "none" });
 		this._currentTab = tab;
 	}
@@ -156,15 +291,29 @@ class TabbedChatlog {
 
 				const setVisibility = (selector, messageType) => {
 					const visible = this.currentTab.isMessageTypeVisible(messageType);
+					const perScene = game.settings.get("tabbed-chatlog", "perScene");
 					const tabExclusive = game.settings.get("tabbed-chatlog", "tabExclusive");
 					if ([CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(messageType)) {
 						// selector.filter(".scenespecific").css({ display: "none" });
 						// selector.not(".scenespecific").css({ display: visible ? "" : "none" });
 						// selector.filter(".scene" + game.user.viewedScene).css({ display: visible ? "" : "none" });
-						selector.filter(`[data-tc-scene]`).css({ display: "none" });
-						selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display: visible ? "" : "none" });
-						selector.filter(`[data-tc-tab]`).css({ display: tabExclusive ? "none" : "" });
-						selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display: visible ? "" : "none" });
+						if (perScene && !tabExclusive) {
+							selector.filter(`[data-tc-scene]`).css({ display: "none" });
+							selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display: visible ? "" : "none" });
+						} else if (!perScene && tabExclusive) {
+							selector.filter(`[data-tc-tab]`).css({ display: "none" });
+							selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display: visible ? "" : "none" });
+						} else if (perScene && tabExclusive) {
+							selector.filter(`[data-tc-scene]`).css({ display: "none" });
+							selector.filter(`[data-tc-tab]`).css({ display: "none" });
+							selector.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`).css({ display: visible ? "" : "none" });
+							for (let message of selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`)) {
+								const tab = message.dataset.tcTab;
+								if (tab && tab !== this.currentTab.id && !this.tabs[tab]) {
+									selector.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${tab}]`).css({ display: visible ? "" : "none" });
+								}
+							}
+						}
 						if (messageType === CONST.CHAT_MESSAGE_TYPES.ROLL) {
 							selector.filter(".gm-roll-hidden").attr("hidden", true);
 						}
@@ -213,122 +362,6 @@ class TabbedChatlog {
 	}
 }
 
-Hooks.on("renderChatLog", async function (chatLog, html, user) {
-	if (game.tabbedchat.isStreaming) return;
-	html.prepend(game.tabbedchat.html);
-	game.tabbedchat.bindHTML(html[0]);
-	if (!game.tabbedchat.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
-	const tabbedchat = document.querySelector(".tabbedchatlog");
-	tabbedchat.addEventListener("wheel", (event) => {
-		event.preventDefault();
-		tabbedchat.scrollBy({
-			left: event.deltaY < 0 ? -30 : 30,
-		});
-	});
-});
-
-Hooks.on("renderChatMessage", (chatMessage, html, data) => {
-	//TODO handle tab-exclusive messages
-	//TODO handle tabs that were excluded
-	if (game.tabbedchat.isStreaming) return;
-	html[0].setAttribute("data-tc-type", data.message.type);
-	if (
-		[CONST.CHAT_MESSAGE_TYPES.OTHER, CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE, CONST.CHAT_MESSAGE_TYPES.ROLL].includes(data.message.type) &&
-		data.message.speaker.scene != undefined &&
-		game.settings.get("tabbed-chatlog", "perScene")
-	) {
-		html[0].setAttribute("data-tc-scene", data.message.speaker.scene);
-	}
-	if (chatMessage.flags["tabbed-chatlog"]?.tabExclusive) {
-		html[0].setAttribute("data-tc-tab", chatMessage.flags["tabbed-chatlog"]?.tabExclusive);
-	}
-
-	if (!game.tabbedchat.currentTab.isMessageVisible(chatMessage)) html.css({ display: "none" });
-});
-
-Hooks.on("diceSoNiceRollComplete", (id) => {
-	const currentTab = game.tabbedchat.currentTab;
-	if (!currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.ROLL)) {
-		$(`#chat-log .message[data-message-id=${id}]`).css({ display: "none" });
-	}
-});
-
-Hooks.on("createChatMessage", (chatMessage, content) => {
-	const sceneMatches = !chatMessage.speaker.scene || chatMessage.speaker.scene === game.user?.viewedScene;
-	const currentTab = game.tabbedchat.currentTab;
-	if (sceneMatches && currentTab.isMessageTypeVisible(chatMessage.type)) return;
-
-	const firstValidTab = game.tabbedchat.getValidTab(chatMessage);
-	if (!firstValidTab) return;
-	if (!chatMessage.flags["tabbed-chatlog"]?.tabExclusive && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC && chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER) {
-		chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id });
-	}
-	if (sceneMatches && !game.tabbedchat.currentTab.isMessageVisible(chatMessage) && game.settings.get("tabbed-chatlog", "autoNavigate")) {
-		game.tabbedchat.tabsController.activate(firstValidTab, { triggerCallback: true });
-	} else game.tabbedchat.tabs[firstValidTab].setNotification();
-});
-
-Hooks.on("preCreateChatMessage", (chatMessage, content) => {
-	//TODO add tab-exclusive messages through flags will probably need to add a setting and change isMessageTypeVisible
-	if (
-		game.settings.get("tabbed-chatlog", "icChatInOoc") &&
-		chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC &&
-		game.tabbedchat.currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.OOC) &&
-		!game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type)
-	) {
-		chatMessage._source.type = CONST.CHAT_MESSAGE_TYPES.OOC;
-		chatMessage.type = CONST.CHAT_MESSAGE_TYPES.OOC;
-		content.type = CONST.CHAT_MESSAGE_TYPES.OOC;
-		delete content.speaker;
-		delete chatMessage.speaker;
-		delete chatMessage._source.speaker;
-	}
-
-	if (chatMessage.whisper?.length) return;
-	if (
-		game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type) &&
-		chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
-		chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
-	) {
-		chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.currentTab.id });
-	}
-	try {
-		if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC || chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE) {
-			const scene = game.scenes.get(chatMessage.speaker.scene);
-			const webhook = scene.getFlag("tabbed-chatlog", "webhook") || game.settings.get("tabbed-chatlog", "icBackupWebhook");
-			if (!webhook == undefined || webhook == "") return;
-
-			const speaker = chatMessage.speaker;
-			const actor = loadActorForChatMessage(speaker);
-			const img = `${game.data.addresses.remote}/${actor ? generatePortraitImageElement(actor) : game.users.get(chatMessage.user.id).avatar}`;
-			const name = actor ? actor.name : speaker.alias;
-
-			let message = chatMessage.content;
-			if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(message);
-			sendToDiscord(webhook, {
-				content: game.tabbedchat.turndown.turndown(message),
-				username: name,
-				avatar_url: img,
-			});
-		} else if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC) {
-			const webhook = game.settings.get("tabbed-chatlog", "oocWebhook");
-			if (webhook == undefined || webhook == "") return;
-
-			const img = `${game.data.addresses.remote}/${game.users.get(chatMessage.user.id).avatar}`;
-
-			let message = chatMessage.content;
-			if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(message);
-			sendToDiscord(webhook, {
-				content: game.tabbedchat.turndown.turndown(message),
-				username: game.users.get(chatMessage.user.id).name,
-				avatar_url: img,
-			});
-		}
-	} catch (error) {
-		console.error(`Tabbed Chatlog | Error trying to send message through the webhook.`, error);
-	}
-});
-
 function sendToDiscord(webhook, body) {
 	$.ajax({
 		type: "POST",
@@ -369,7 +402,7 @@ function loadActorForChatMessage(speaker) {
 
 function generatePortraitImageElement(actor) {
 	let img = "";
-	img = actor.token ? actor.token.data.img : actor.data.token.img;
+	img = actor.token ? actor.token.img : actor.token.img;
 	return img;
 }
 
@@ -377,14 +410,16 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 	if (!game.settings.get("tabbed-chatlog", "perScene")) return;
 	let loadedWebhookData = "";
 	if (app.object.compendium) return;
-	if (app.object.data.flags["tabbed-chatlog"]?.webhook) loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
+	if (app.object.flags["tabbed-chatlog"]?.webhook) loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
 	const fxHtml = `
 	<div class="form-group">
 		<label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhook.name")}</label>
 		<input id="scenewebhook" type="password" name="flags.tabbed-chatlog.webhook" value="${loadedWebhookData}" />
 		<p class="notes">
 			${game.i18n
-				.format("TC.SETTINGS.IcSceneWebhook.hint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") })
+				.format("TC.SETTINGS.IcSceneWebhook.hint", {
+					setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
+				})
 				.replace("---", `<a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">discord's site</a>`)}
 		</p>
 	</div> `;
@@ -431,6 +466,7 @@ Hooks.on("setup", () => {
 		instancedTabs.push(new ChatTab({ ...tab }));
 	});
 	game.tabbedchat = new TabbedChatlog(instancedTabs);
+	game.tabbedchat.initHooks();
 });
 
 Hooks.on("ready", () => {

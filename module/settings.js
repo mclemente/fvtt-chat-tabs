@@ -26,7 +26,9 @@ export function registerSettings() {
 	// TODO move these onto the ChatTabs class for every tab but rolls
 	game.settings.register("tabbed-chatlog", "icBackupWebhook", {
 		name: game.i18n.localize("TC.SETTINGS.IcFallbackWebhook.name"),
-		hint: game.i18n.format("TC.SETTINGS.IcFallbackWebhook.hint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") }),
+		hint: game.i18n.format("TC.SETTINGS.IcFallbackWebhook.hint", {
+			setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
+		}),
 		scope: "world",
 		config: true,
 		default: "",
@@ -75,7 +77,7 @@ export function registerSettings() {
 	game.settings.register("tabbed-chatlog", "tabExclusive", {
 		name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
 		hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
-		scope: "client",
+		scope: "world",
 		config: true,
 		default: false,
 		type: Boolean,
@@ -211,10 +213,10 @@ class TabbedChatTabSettings extends FormApplication {
 
 	_activateCoreListeners(html) {
 		super._activateCoreListeners(html);
-		if (this.changeTabs) {
+		if (this.changeTabs !== null) {
 			const tabName = this.changeTabs.toString();
 			if (tabName !== this._tabs[0].active) this._tabs[0].activate(tabName);
-			this.changeTabs = 0;
+			this.changeTabs = null;
 		}
 	}
 
@@ -261,7 +263,7 @@ class TabbedChatTabSettings extends FormApplication {
 		html.find("button[data-action=table-delete]").on("click", (event) => {
 			const { key } = event.target?.dataset;
 			this.tabs.splice(Number(key), 1);
-			this.changeTabs = this.tabs.length - 1;
+			this.changeTabs = Number(key) - 1;
 			this.render();
 		});
 		html.find("button[data-action=change-prio]").on("click", (event) => {
@@ -278,6 +280,28 @@ class TabbedChatTabSettings extends FormApplication {
 			this.changeTabs = key + prio;
 			this.render();
 		});
+		// Change inputs
+		for (const input of html[0].querySelectorAll(".form-group input")) {
+			input.addEventListener("change", (event) => {
+				const [tabs, index, name, item] = event.target.name.split(".");
+				if (event.target.type === "checkbox") {
+					this[tabs][index][name][item].value = event.target.checked;
+				} else if (item) {
+					// Probably unused
+					this[tabs][index][name][item] = event.target.value;
+				} else {
+					this[tabs][index][name] = event.target.value;
+				}
+				event.preventDefault();
+			});
+		}
+		for (const input of html[0].querySelectorAll(".form-group select")) {
+			input.addEventListener("change", (event) => {
+				const [tabs, index, name, type, item] = event.target.name.split(".");
+				this[tabs][index][name][type][item].value = event.target.value;
+				event.preventDefault();
+			});
+		}
 	}
 
 	_getSubmitData(updateData) {
@@ -300,11 +324,13 @@ class TabbedChatTabSettings extends FormApplication {
 					[key]: Number(permissions.roles[key]),
 				}))
 			);
-			permissions.users = Object.assign(
-				...Object.keys(permissions.users).map((key) => ({
-					[key]: Number(permissions.users[key]),
-				}))
-			);
+			if (permissions.users !== undefined && Object.keys(permissions.users).length) {
+				permissions.users = Object.assign(
+					...Object.keys(permissions.users).map((key) => ({
+						[key]: Number(permissions.users[key]),
+					}))
+				);
+			}
 			tabs.push({
 				id,
 				name,

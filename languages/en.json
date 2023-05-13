@@ -50,11 +50,11 @@
 			},
 			"IC": {
 				"label": "In Character",
-				"hint": "Messages send by users with assigned characters or with owned tokens in a scene."
+				"hint": "Messages sent by users with an owned token in a scene."
 			},
 			"OOC": {
 				"label": "Out of Character",
-				"hint": "Messages sent by the /ooc command, or by users without assigned characters or owned tokens in a scene."
+				"hint": "Messages sent by the /ooc command or by users without assigned actor's token in a scene."
 			},
 			"OTHER": {
 				"label": "Other",
