@@ -15,8 +15,8 @@ export function registerSettings() {
 	});
 
 	game.settings.register("tabbed-chatlog", "oocWebhook", {
-		name: game.i18n.localize("TC.SETTINGS.OocWebhookName"),
-		hint: game.i18n.localize("TC.SETTINGS.OocWebhookHint"),
+		name: game.i18n.localize("TC.SETTINGS.OocWebhook.name"),
+		hint: game.i18n.localize("TC.SETTINGS.OocWebhook.hint"),
 		scope: "world",
 		config: true,
 		default: "",
@@ -25,8 +25,8 @@ export function registerSettings() {
 
 	// TODO move these onto the ChatTabs class for every tab but rolls
 	game.settings.register("tabbed-chatlog", "icBackupWebhook", {
-		name: game.i18n.localize("TC.SETTINGS.IcFallbackWebhookName"),
-		hint: game.i18n.format("TC.SETTINGS.IcFallbackWebhookHint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") }),
+		name: game.i18n.localize("TC.SETTINGS.IcFallbackWebhook.name"),
+		hint: game.i18n.format("TC.SETTINGS.IcFallbackWebhook.hint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") }),
 		scope: "world",
 		config: true,
 		default: "",
@@ -34,8 +34,8 @@ export function registerSettings() {
 	});
 
 	game.settings.register("tabbed-chatlog", "icChatInOoc", {
-		name: game.i18n.localize("TC.SETTINGS.IcChatInOocName"),
-		hint: game.i18n.localize("TC.SETTINGS.IcChatInOocHint"),
+		name: game.i18n.localize("TC.SETTINGS.IcChatInOoc.name"),
+		hint: game.i18n.localize("TC.SETTINGS.IcChatInOoc.hint"),
 		scope: "world",
 		config: true,
 		default: true,
@@ -43,8 +43,8 @@ export function registerSettings() {
 	});
 
 	game.settings.register("tabbed-chatlog", "hideInStreamView", {
-		name: game.i18n.localize("TC.SETTINGS.HideInStreamViewName"),
-		hint: game.i18n.localize("TC.SETTINGS.HideInStreamViewHint"),
+		name: game.i18n.localize("TC.SETTINGS.HideInStreamView.name"),
+		hint: game.i18n.localize("TC.SETTINGS.HideInStreamView.hint"),
 		scope: "world",
 		config: true,
 		default: true,
@@ -52,17 +52,20 @@ export function registerSettings() {
 	});
 
 	game.settings.register("tabbed-chatlog", "perScene", {
-		name: game.i18n.localize("TC.SETTINGS.PerSceneName"),
-		hint: game.i18n.localize("TC.SETTINGS.PerSceneHint"),
+		name: game.i18n.localize("TC.SETTINGS.PerScene.name"),
+		hint: game.i18n.localize("TC.SETTINGS.PerScene.hint"),
 		scope: "world",
 		config: true,
 		default: true,
 		type: Boolean,
+		onChange: () => {
+			game.tabbedchat.tabsController.activate(game.tabbedchat.currentTab.id, { triggerCallback: true });
+		},
 	});
 
 	game.settings.register("tabbed-chatlog", "autoNavigate", {
-		name: game.i18n.localize("TC.SETTINGS.AutoNavigateName"),
-		hint: game.i18n.localize("TC.SETTINGS.AutoNavigateHint"),
+		name: game.i18n.localize("TC.SETTINGS.AutoNavigate.name"),
+		hint: game.i18n.localize("TC.SETTINGS.AutoNavigate.hint"),
 		scope: "client",
 		config: true,
 		default: false,
@@ -74,7 +77,7 @@ export function registerSettings() {
 		config: false,
 		default: [
 			{
-				id: "0", // In Character
+				id: "wmr4yRZBlboaEttp",
 				name: game.i18n.localize("TC.TABS.IC"),
 				messageTypes: {
 					IC: true,

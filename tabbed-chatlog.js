@@ -343,15 +343,12 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 	if (app.object.data.flags["tabbed-chatlog"]?.webhook) loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
 	const fxHtml = `
 	<div class="form-group">
-		<label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhookName")}</label>
+		<label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhook.name")}</label>
 		<input id="scenewebhook" type="password" name="flags.tabbed-chatlog.webhook" value="${loadedWebhookData}" />
 		<p class="notes">
 			${game.i18n
-				.format("TC.SETTINGS.IcSceneWebhookHint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") })
-				.replace(
-					"{link}",
-					`<a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks">https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks</a>`
-				)}
+				.format("TC.SETTINGS.IcSceneWebhook.hint", { setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name") })
+				.replace("---", `<a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">discord's site</a>`)}
 		</p>
 	</div> `;
 	const fxFind = html.find("select[name ='journal']");
