@@ -262,7 +262,7 @@ class TabbedChatlog {
 					const name = actor ? actor.name : speaker.alias;
 
 					let message = chatMessage.content;
-					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(message);
+					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(chatMessage);
 					sendToDiscord(webhook, {
 						content: game.tabbedchat.turndown.turndown(message),
 						username: name,
@@ -275,7 +275,7 @@ class TabbedChatlog {
 					const img = `${game.data.addresses.remote}/${game.users.get(chatMessage.user.id).avatar}`;
 
 					let message = chatMessage.content;
-					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(message);
+					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(chatMessage);
 					sendToDiscord(webhook, {
 						content: game.tabbedchat.turndown.turndown(message),
 						username: game.users.get(chatMessage.user.id).name,
@@ -420,11 +420,11 @@ function sendToDiscord(webhook, body) {
 	});
 }
 
-function convertPolyglotMessage(message) {
-	let lang = chatMessage.flags.polyglot.language;
-	const LanguageProvider = polyglot.polyglot.LanguageProvider;
-	if (lang != LanguageProvider.defaultLanguage) {
-		message = LanguageProvider.languages[lang] + ": ||" + chatMessage.content + "||";
+function convertPolyglotMessage(chatMessage) {
+	const lang = chatMessage.flags.polyglot.language;
+	let message = chatMessage.content;
+	if (lang !== game.polyglot.defaultLanguage) {
+		message = game.polyglot.languages[lang].label + ": ||" + message + "||";
 	}
 	return message;
 }
