@@ -188,7 +188,7 @@ class TabbedChatTabSettings extends FormApplication {
 		return mergeObject(super.defaultOptions, {
 			id: "tabbeb-chat-tabs-form",
 			title: `Tabbed Chatlog: ${game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name")}`,
-			template: "./modules/tabbed-chatlog/templates/ChatTabs.hbs",
+			template: "./modules/chat-tabs/templates/ChatTabs.hbs",
 			classes: ["form", "tabbed-chat"],
 			width: 640,
 			height: "auto",
@@ -219,7 +219,7 @@ class TabbedChatTabSettings extends FormApplication {
 	}
 
 	async resetToDefault(key) {
-		const defaultValue = game.settings.settings.get(`tabbed-chatlog.${key}`).default;
+		const defaultValue = game.settings.settings.get(`chat-tabs.${key}`).default;
 		await game.settings.set("chat-tabs", key, defaultValue);
 	}
 
@@ -360,7 +360,7 @@ class TabbedChatTabSettings extends FormApplication {
 	 */
 	async _updateObject(event, formData) {
 		for (let [k, v] of Object.entries(formData)) {
-			let s = game.settings.settings.get(`tabbed-chatlog.${k}`);
+			let s = game.settings.settings.get(`chat-tabs.${k}`);
 			let current = game.settings.get(s.namespace, s.key);
 			if (v === current) continue;
 			const requiresClientReload = s.scope === "client" && s.requiresReload;

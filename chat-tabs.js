@@ -211,7 +211,7 @@ class TabbedChatlog {
 				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
 			) {
 				chatMessage.updateSource({
-					["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id,
+					["flags.chat-tabs.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id,
 				});
 			}
 			if (
@@ -255,7 +255,7 @@ class TabbedChatlog {
 				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
 				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
 			) {
-				chatMessage.updateSource({ ["flags.tabbed-chatlog.tabExclusive"]: game.tabbedchat.currentTab.id });
+				chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: game.tabbedchat.currentTab.id });
 			}
 			try {
 				if (
@@ -472,7 +472,7 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 	const fxHtml = `
 	<div class="form-group">
 		<label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhook.name")}</label>
-		<input id="scenewebhook" type="password" name="flags.tabbed-chatlog.webhook" value="${loadedWebhookData}" />
+		<input id="scenewebhook" type="password" name="flags.chat-tabs.webhook" value="${loadedWebhookData}" />
 		<p class="notes">
 			${game.i18n
 				.format("TC.SETTINGS.IcSceneWebhook.hint", {
@@ -490,8 +490,8 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 });
 
 Hooks.on("renderSettingsConfig", (settingsConfig, html) => {
-	const oocWebhook = html.find('input[name="tabbed-chatlog.oocWebhook"]');
-	const icWebhook = html.find('input[name="tabbed-chatlog.icBackupWebhook"]');
+	const oocWebhook = html.find('input[name="chat-tabs.oocWebhook"]');
+	const icWebhook = html.find('input[name="chat-tabs.icBackupWebhook"]');
 	oocWebhook[0].type = "password";
 	icWebhook[0].type = "password";
 });
