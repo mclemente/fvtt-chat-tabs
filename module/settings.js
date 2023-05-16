@@ -87,14 +87,16 @@ export function registerSettings() {
 	});
 
 	// TODO remove this on Foundry V11
-	game.settings.register("tabbed-chatlog", "users", {
-		// name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
-		// hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
-		scope: "world",
-		config: false,
-		default: [],
-		type: Array,
-	});
+	if (game.version < 11) {
+		game.settings.register("tabbed-chatlog", "users", {
+			// name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
+			// hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
+			scope: "world",
+			config: false,
+			default: [],
+			type: Array,
+		});
+	}
 
 	game.settings.register("tabbed-chatlog", "tabs", {
 		scope: "world",

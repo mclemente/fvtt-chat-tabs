@@ -36,7 +36,13 @@ class ChatTab {
 		);
 	}
 	createUserPermissions(users = {}) {
-		const usersSetting = game.settings.get("tabbed-chatlog", "users");
+		// TODO remove this on Foundry V11
+		const usersSetting =
+			game.version < 11
+				? game.settings.get("tabbed-chatlog", "users")
+				: Array.from(game.users.keys()).filter(
+						(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
+				  );
 		return mergeObject(
 			Object.assign(
 				usersSetting.reduce(
@@ -535,7 +541,7 @@ Hooks.on("setup", () => {
 Hooks.on("ready", () => {
 	if (game.modules.get("narrator-tools")?.active) NarratorTools._msgtype = 2;
 	// TODO remove this on Foundry V11
-	if (game.user.isGM && game.users) {
+	if (game.version < 11 && game.user.isGM && game.users) {
 		const users = Array.from(game.users.keys()).filter(
 			(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
 		);
