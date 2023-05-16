@@ -6,7 +6,7 @@ export const RW_PERMISSIONS = {
 };
 
 export function registerSettings() {
-	game.settings.registerMenu("tabbed-chatlog", "ChatTabsSettings", {
+	game.settings.registerMenu("chat-tabs", "ChatTabsSettings", {
 		name: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
 		label: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
 		icon: "fas fa-comments",
@@ -14,7 +14,7 @@ export function registerSettings() {
 		restricted: true,
 	});
 
-	game.settings.register("tabbed-chatlog", "oocWebhook", {
+	game.settings.register("chat-tabs", "oocWebhook", {
 		name: game.i18n.localize("TC.SETTINGS.OocWebhook.name"),
 		hint: game.i18n.localize("TC.SETTINGS.OocWebhook.hint"),
 		scope: "world",
@@ -24,7 +24,7 @@ export function registerSettings() {
 	});
 
 	// TODO move these onto the ChatTabs class for every tab but rolls
-	game.settings.register("tabbed-chatlog", "icBackupWebhook", {
+	game.settings.register("chat-tabs", "icBackupWebhook", {
 		name: game.i18n.localize("TC.SETTINGS.IcFallbackWebhook.name"),
 		hint: game.i18n.format("TC.SETTINGS.IcFallbackWebhook.hint", {
 			setting: game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name"),
@@ -35,7 +35,7 @@ export function registerSettings() {
 		type: String,
 	});
 
-	game.settings.register("tabbed-chatlog", "icChatInOoc", {
+	game.settings.register("chat-tabs", "icChatInOoc", {
 		name: game.i18n.localize("TC.SETTINGS.IcChatInOoc.name"),
 		hint: game.i18n.localize("TC.SETTINGS.IcChatInOoc.hint"),
 		scope: "world",
@@ -44,7 +44,7 @@ export function registerSettings() {
 		type: Boolean,
 	});
 
-	game.settings.register("tabbed-chatlog", "hideInStreamView", {
+	game.settings.register("chat-tabs", "hideInStreamView", {
 		name: game.i18n.localize("TC.SETTINGS.HideInStreamView.name"),
 		hint: game.i18n.localize("TC.SETTINGS.HideInStreamView.hint"),
 		scope: "world",
@@ -53,7 +53,7 @@ export function registerSettings() {
 		type: Boolean,
 	});
 
-	game.settings.register("tabbed-chatlog", "perScene", {
+	game.settings.register("chat-tabs", "perScene", {
 		name: game.i18n.localize("TC.SETTINGS.PerScene.name"),
 		hint: game.i18n.localize("TC.SETTINGS.PerScene.hint"),
 		scope: "world",
@@ -65,7 +65,7 @@ export function registerSettings() {
 		},
 	});
 
-	game.settings.register("tabbed-chatlog", "autoNavigate", {
+	game.settings.register("chat-tabs", "autoNavigate", {
 		name: game.i18n.localize("TC.SETTINGS.AutoNavigate.name"),
 		hint: game.i18n.localize("TC.SETTINGS.AutoNavigate.hint"),
 		scope: "client",
@@ -74,7 +74,7 @@ export function registerSettings() {
 		type: Boolean,
 	});
 
-	game.settings.register("tabbed-chatlog", "tabExclusive", {
+	game.settings.register("chat-tabs", "tabExclusive", {
 		name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
 		hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
 		scope: "world",
@@ -88,7 +88,7 @@ export function registerSettings() {
 
 	// TODO remove this on Foundry V11
 	if (game.version < 11) {
-		game.settings.register("tabbed-chatlog", "users", {
+		game.settings.register("chat-tabs", "users", {
 			// name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
 			// hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
 			scope: "world",
@@ -98,7 +98,7 @@ export function registerSettings() {
 		});
 	}
 
-	game.settings.register("tabbed-chatlog", "tabs", {
+	game.settings.register("chat-tabs", "tabs", {
 		scope: "world",
 		config: false,
 		default: [
@@ -139,7 +139,7 @@ class TabbedChatTabSettings extends FormApplication {
 	}
 
 	init() {
-		this.tabs = deepClone(game.settings.get("tabbed-chatlog", "tabs"));
+		this.tabs = deepClone(game.settings.get("chat-tabs", "tabs"));
 		const chatTab = game.tabbedchat.chatTab.prototype;
 		this.tabs.forEach((tab) => {
 			tab.messageTypes = chatTab.createMessageTypes(tab.messageTypes);
@@ -220,7 +220,7 @@ class TabbedChatTabSettings extends FormApplication {
 
 	async resetToDefault(key) {
 		const defaultValue = game.settings.settings.get(`tabbed-chatlog.${key}`).default;
-		await game.settings.set("tabbed-chatlog", key, defaultValue);
+		await game.settings.set("chat-tabs", key, defaultValue);
 	}
 
 	_activateCoreListeners(html) {

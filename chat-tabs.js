@@ -39,7 +39,7 @@ class ChatTab {
 		// TODO remove this on Foundry V11
 		const usersSetting =
 			game.version < 11
-				? game.settings.get("tabbed-chatlog", "users")
+				? game.settings.get("chat-tabs", "users")
 				: Array.from(game.users.keys()).filter(
 						(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
 				  );
@@ -108,15 +108,15 @@ class ChatTab {
 		if (!this.isMessageTypeVisible(messageType)) return false;
 		if (
 			message.speaker.scene &&
-			game.settings.get("tabbed-chatlog", "perScene") &&
+			game.settings.get("chat-tabs", "perScene") &&
 			(messageType == CONST.CHAT_MESSAGE_TYPES.IC || messageType == CONST.CHAT_MESSAGE_TYPES.EMOTE) &&
 			message.speaker.scene != game.user.viewedScene
 		) {
 			return false;
 		}
-		const tabExclusiveID = message.flags["tabbed-chatlog"]?.tabExclusive;
+		const tabExclusiveID = message.flags["chat-tabs"]?.tabExclusive;
 		if (
-			game.settings.get("tabbed-chatlog", "tabExclusive") &&
+			game.settings.get("chat-tabs", "tabExclusive") &&
 			tabExclusiveID &&
 			game.tabbedchat.currentTab.id !== tabExclusiveID &&
 			game.tabbedchat.tabs[tabExclusiveID]
@@ -177,12 +177,12 @@ class TabbedChatlog {
 					CONST.CHAT_MESSAGE_TYPES.ROLL,
 				].includes(data.message.type) &&
 				data.message.speaker.scene != undefined &&
-				game.settings.get("tabbed-chatlog", "perScene")
+				game.settings.get("chat-tabs", "perScene")
 			) {
 				html[0].setAttribute("data-tc-scene", data.message.speaker.scene);
 			}
-			if (chatMessage.flags["tabbed-chatlog"]?.tabExclusive) {
-				html[0].setAttribute("data-tc-tab", chatMessage.flags["tabbed-chatlog"]?.tabExclusive);
+			if (chatMessage.flags["chat-tabs"]?.tabExclusive) {
+				html[0].setAttribute("data-tc-tab", chatMessage.flags["chat-tabs"]?.tabExclusive);
 			}
 			if (game.system.id === "pf2e" && chatMessage.content.includes(`section class="damage-taken"`)) {
 				html[0].classList.add("emote");
@@ -206,7 +206,7 @@ class TabbedChatlog {
 			const firstValidTab = game.tabbedchat.getValidTab(chatMessage);
 			if (!firstValidTab) return;
 			if (
-				!chatMessage.flags["tabbed-chatlog"]?.tabExclusive &&
+				!chatMessage.flags["chat-tabs"]?.tabExclusive &&
 				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
 				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
 			) {
@@ -217,7 +217,7 @@ class TabbedChatlog {
 			if (
 				sceneMatches &&
 				!game.tabbedchat.currentTab.isMessageVisible(chatMessage) &&
-				game.settings.get("tabbed-chatlog", "autoNavigate")
+				game.settings.get("chat-tabs", "autoNavigate")
 			) {
 				game.tabbedchat.tabsController.activate(firstValidTab, { triggerCallback: true });
 			} else game.tabbedchat.tabs[firstValidTab].setNotification();
@@ -230,7 +230,7 @@ class TabbedChatlog {
 				content.type = CONST.CHAT_MESSAGE_TYPES.ROLL;
 			}
 			if (
-				game.settings.get("tabbed-chatlog", "icChatInOoc") &&
+				game.settings.get("chat-tabs", "icChatInOoc") &&
 				chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC &&
 				game.tabbedchat.currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.OOC) &&
 				!game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type)
@@ -264,8 +264,7 @@ class TabbedChatlog {
 				) {
 					const scene = game.scenes.get(chatMessage.speaker.scene);
 					const webhook =
-						scene.getFlag("tabbed-chatlog", "webhook") ||
-						game.settings.get("tabbed-chatlog", "icBackupWebhook");
+						scene.getFlag("chat-tabs", "webhook") || game.settings.get("chat-tabs", "icBackupWebhook");
 					if (!webhook == undefined || webhook == "") return;
 
 					const speaker = chatMessage.speaker;
@@ -283,7 +282,7 @@ class TabbedChatlog {
 						avatar_url: img,
 					});
 				} else if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC) {
-					const webhook = game.settings.get("tabbed-chatlog", "oocWebhook");
+					const webhook = game.settings.get("chat-tabs", "oocWebhook");
 					if (webhook == undefined || webhook == "") return;
 
 					const img = `${game.data.addresses.remote}/${game.users.get(chatMessage.user.id).avatar}`;
@@ -339,8 +338,8 @@ class TabbedChatlog {
 
 				const setVisibility = (selector, messageType) => {
 					const visible = this.currentTab.isMessageTypeVisible(messageType);
-					const perScene = game.settings.get("tabbed-chatlog", "perScene");
-					const tabExclusive = game.settings.get("tabbed-chatlog", "tabExclusive");
+					const perScene = game.settings.get("chat-tabs", "perScene");
+					const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
 					if (
 						[
 							CONST.CHAT_MESSAGE_TYPES.IC,
@@ -419,7 +418,7 @@ class TabbedChatlog {
 	}
 
 	get isStreaming() {
-		return game.settings.get("tabbed-chatlog", "hideInStreamView") && window.location.href.endsWith("/stream");
+		return game.settings.get("chat-tabs", "hideInStreamView") && window.location.href.endsWith("/stream");
 	}
 }
 
@@ -466,11 +465,10 @@ function generatePortraitImageElement(actor) {
 }
 
 Hooks.on("renderSceneConfig", (app, html, data) => {
-	if (!game.settings.get("tabbed-chatlog", "perScene")) return;
+	if (!game.settings.get("chat-tabs", "perScene")) return;
 	let loadedWebhookData = "";
 	if (app.object.compendium) return;
-	if (app.object.flags["tabbed-chatlog"]?.webhook)
-		loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
+	if (app.object.flags["chat-tabs"]?.webhook) loadedWebhookData = app.object.getFlag("chat-tabs", "webhook");
 	const fxHtml = `
 	<div class="form-group">
 		<label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhook.name")}</label>
@@ -500,7 +498,7 @@ Hooks.on("renderSettingsConfig", (settingsConfig, html) => {
 
 Hooks.on("init", () => {
 	libWrapper.register(
-		"tabbed-chatlog",
+		"chat-tabs",
 		"Messages.prototype.flush",
 		async function () {
 			return Dialog.confirm({
@@ -529,7 +527,7 @@ Hooks.on("init", () => {
 
 Hooks.on("setup", () => {
 	registerSettings();
-	const tabs = game.settings.get("tabbed-chatlog", "tabs");
+	const tabs = game.settings.get("chat-tabs", "tabs");
 	const instancedTabs = [];
 	tabs.forEach((tab) => {
 		instancedTabs.push(new ChatTab({ ...tab }));
@@ -545,6 +543,6 @@ Hooks.on("ready", () => {
 		const users = Array.from(game.users.keys()).filter(
 			(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
 		);
-		game.settings.set("tabbed-chatlog", "users", users);
+		game.settings.set("chat-tabs", "users", users);
 	}
 });

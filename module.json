@@ -1,8 +1,8 @@
 {
-	"name": "tabbed-chatlog",
-	"title": "Tabbed Chatlog",
-	"description": "Splits the Chatlog into In Character (per scene), Rolls (per scene), and Out of Character (global).",
-	"version": "2.0",
+	"name": "chat-tabs",
+	"title": "Customizable Chat Tabs",
+	"description": "Splits the Chatlog into tabs that can be customized.",
+	"version": "1.0",
 	"compatibility": {
 		"minimum": 10,
 		"verified": 11
@@ -15,9 +15,9 @@
 			"github": "mclemente"
 		}
 	],
-	"esmodules": ["./tabbed-chatlog.js"],
+	"esmodules": ["./chat-tabs.js"],
 	"scripts": [],
-	"styles": ["/styles/tabbed-chatlog.css"],
+	"styles": ["/styles/chat-tabs.css"],
 	"languages": [
 		{
 			"lang": "en",
