@@ -512,8 +512,10 @@ Hooks.on("init", () => {
 							.filter((entity) => game.tabbedchat.currentTab.isMessageVisible(entity))
 							.map((message) => message.id)
 					);
-					const jumpToBottomElement = document.querySelector(".jump-to-bottom");
-					jumpToBottomElement.classList.toggle("hidden", true);
+					if (game.version >= 11) {
+						const jumpToBottomElement = document.querySelector(".jump-to-bottom");
+						jumpToBottomElement.classList.toggle("hidden", true);
+					}
 				},
 				options: {
 					top: window.innerHeight - 150,
