@@ -178,6 +178,9 @@ class TabbedChatlog {
 			if (chatMessage.flags["tabbed-chatlog"]?.tabExclusive) {
 				html[0].setAttribute("data-tc-tab", chatMessage.flags["tabbed-chatlog"]?.tabExclusive);
 			}
+			if (game.system.id === "pf2e" && chatMessage.content.includes(`section class="damage-taken"`)) {
+				html[0].classList.add("emote");
+			}
 
 			if (!game.tabbedchat.currentTab.isMessageVisible(chatMessage)) html.css({ display: "none" });
 		});
@@ -189,7 +192,7 @@ class TabbedChatlog {
 			}
 		});
 
-		Hooks.on("createChatMessage", (chatMessage, content) => {
+		Hooks.on("createChatMessage", (chatMessage, options, userId) => {
 			const sceneMatches = !chatMessage.speaker.scene || chatMessage.speaker.scene === game.user?.viewedScene;
 			const currentTab = game.tabbedchat.currentTab;
 			if (sceneMatches && currentTab.isMessageTypeVisible(chatMessage.type)) return;
@@ -214,7 +217,12 @@ class TabbedChatlog {
 			} else game.tabbedchat.tabs[firstValidTab].setNotification();
 		});
 
-		Hooks.on("preCreateChatMessage", (chatMessage, content) => {
+		Hooks.on("preCreateChatMessage", (chatMessage, content, options, userId) => {
+			if (game.system.id === "pf2e" && chatMessage.content.includes(`section class="damage-taken"`)) {
+				chatMessage._source.type = CONST.CHAT_MESSAGE_TYPES.ROLL;
+				chatMessage.type = CONST.CHAT_MESSAGE_TYPES.ROLL;
+				content.type = CONST.CHAT_MESSAGE_TYPES.ROLL;
+			}
 			if (
 				game.settings.get("tabbed-chatlog", "icChatInOoc") &&
 				chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC &&
