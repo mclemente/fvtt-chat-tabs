@@ -1,4 +1,4 @@
-# Tabbed Chatlog
+# Customizable Chat Tabs
 
 Splits the Chatlog into tabs that can be customized.
 
