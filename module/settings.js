@@ -168,6 +168,13 @@ class TabbedChatTabSettings extends FormApplication {
 				};
 			});
 		});
+		const userLabels = Array.from(game.users.entries())
+			.filter((key) => key[1].role !== CONST.USER_ROLES.GAMEMASTER)
+			.reduce((acc, key) => {
+				return Object.assign(acc, {
+					[key[0]]: key[1].name,
+				});
+			}, {});
 		Object.keys(this.tabs).forEach((key) => {
 			Object.keys(this.tabs[key].permissions.roles).forEach((id) => {
 				this.tabs[key].permissions.roles[id] = {
@@ -177,7 +184,7 @@ class TabbedChatTabSettings extends FormApplication {
 			});
 			Object.keys(this.tabs[key].permissions.users).forEach((id) => {
 				this.tabs[key].permissions.users[id] = {
-					label: game.users.get(id).name,
+					label: userLabels[id],
 					value: this.tabs[key].permissions.users[id] ?? RW_PERMISSIONS.EMPTY,
 				};
 			});
