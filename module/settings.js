@@ -86,18 +86,6 @@ export function registerSettings() {
 		},
 	});
 
-	// TODO remove this on Foundry V11
-	if (game.version < 11) {
-		game.settings.register("chat-tabs", "users", {
-			// name: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
-			// hint: game.i18n.localize("TC.SETTINGS.tabExclusive.hint"),
-			scope: "world",
-			config: false,
-			default: [],
-			type: Array,
-		});
-	}
-
 	game.settings.register("chat-tabs", "tabs", {
 		scope: "world",
 		config: false,
@@ -168,13 +156,6 @@ class TabbedChatTabSettings extends FormApplication {
 				};
 			});
 		});
-		const userLabels = Array.from(game.users.entries())
-			.filter((key) => key[1].role !== CONST.USER_ROLES.GAMEMASTER)
-			.reduce((acc, key) => {
-				return Object.assign(acc, {
-					[key[0]]: key[1].name,
-				});
-			}, {});
 		Object.keys(this.tabs).forEach((key) => {
 			Object.keys(this.tabs[key].permissions.roles).forEach((id) => {
 				this.tabs[key].permissions.roles[id] = {
@@ -182,12 +163,14 @@ class TabbedChatTabSettings extends FormApplication {
 					value: this.tabs[key].permissions.roles[id] ?? RW_PERMISSIONS.EMPTY,
 				};
 			});
-			Object.keys(this.tabs[key].permissions.users).forEach((id) => {
-				this.tabs[key].permissions.users[id] = {
-					label: userLabels[id],
-					value: this.tabs[key].permissions.users[id] ?? RW_PERMISSIONS.EMPTY,
-				};
-			});
+			Object.keys(this.tabs[key].permissions.users)
+				.filter((id) => game.users.get(id).role !== CONST.USER_ROLES.GAMEMASTER)
+				.forEach((id) => {
+					this.tabs[key].permissions.users[id] = {
+						label: game.users.get(id).name,
+						value: this.tabs[key].permissions.users[id] ?? RW_PERMISSIONS.EMPTY,
+					};
+				});
 		});
 	}
 

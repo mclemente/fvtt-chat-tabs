@@ -36,22 +36,17 @@ class ChatTab {
 		);
 	}
 	createUserPermissions(users = {}) {
-		// TODO remove this on Foundry V11
-		const usersSetting =
-			game.version < 11
-				? game.settings.get("chat-tabs", "users")
-				: Array.from(game.users.keys()).filter(
-						(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
-				  );
 		return mergeObject(
 			Object.assign(
-				usersSetting.reduce(
-					(acc, value) => ({
-						...acc,
-						[value]: RW_PERMISSIONS.EMPTY,
-					}),
-					{}
-				)
+				Array.from(game.users.keys())
+					.filter((key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER)
+					.reduce(
+						(acc, value) => ({
+							...acc,
+							[value]: RW_PERMISSIONS.EMPTY,
+						}),
+						{}
+					)
 			),
 			users
 		);
@@ -540,11 +535,4 @@ Hooks.on("setup", () => {
 
 Hooks.on("ready", () => {
 	if (game.modules.get("narrator-tools")?.active) NarratorTools._msgtype = 2;
-	// TODO remove this on Foundry V11
-	if (game.version < 11 && game.user.isGM && game.users) {
-		const users = Array.from(game.users.keys()).filter(
-			(key) => game.users.get(key).role !== CONST.USER_ROLES.GAMEMASTER
-		);
-		game.settings.set("chat-tabs", "users", users);
-	}
 });
