@@ -254,10 +254,11 @@ class TabbedChatlog {
 			}
 			try {
 				let webhook, message, name, img, embeds;
+				const sendRoll = chatMessage.isRoll && game.settings.get("chat-tabs", "rollsToWebhook");
 				if (
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC ||
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE ||
-					(chatMessage.isRoll && chatMessage.speaker.actor)
+					(sendRoll && chatMessage.speaker.actor)
 				) {
 					const scene = game.scenes.get(chatMessage.speaker.scene);
 					webhook =
@@ -270,7 +271,7 @@ class TabbedChatlog {
 					name = actor ? actor.name : speaker.alias;
 				} else if (
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC ||
-					(chatMessage.isRoll && !chatMessage.speaker.actor)
+					(sendRoll && !chatMessage.speaker.actor)
 				) {
 					webhook = game.settings.get("chat-tabs", "oocWebhook");
 					if (webhook == undefined || webhook == "") return;
@@ -279,7 +280,7 @@ class TabbedChatlog {
 					name = chatMessage.user.name;
 				}
 				if (webhook) {
-					if (chatMessage.isRoll) {
+					if (sendRoll) {
 						const title = chatMessage.flavor ? chatMessage.flavor + "\n" : "";
 						const description = `${game.i18n.localize("Roll Formula")}: ${chatMessage.rolls[0].formula} = ${
 							chatMessage.rolls[0].result
