@@ -9,7 +9,7 @@ jobs:
             - uses: actions/checkout@v2
 
             # create a zip file with all files required by the module to add to the release
-            - run: zip -r ./module.zip module.json chat-tabs.js languages/ styles/
+            - run: zip -r ./module.zip module.json chat-tabs.js languages/ module/ styles/ templates/
 
             # Get the version from 'module.json'
             - name: Get Version
