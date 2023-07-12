@@ -19,6 +19,11 @@
 			"IcChatInOoc.name": "Convert In Character messages to OOC chat",
 			"IcChatInOoc.hint": "When a player sends a message with the OOC tab active, the message will be posted on that chat instead of the In Character chat. This is useful for players who forget to use /ooc.",
 
+			"rollsToWebhook": {
+				"name": "Send Rolls to Webhooks",
+				"hint": "This will send rolls to their appropriate webhooks (if they are set)."
+			},
+
 			"HideInStreamView.name": "Disable on Stream View",
 			"HideInStreamView.hint": "Disables the chat tabs when viewing the game on /stream.",
 

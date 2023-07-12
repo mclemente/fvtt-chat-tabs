@@ -44,6 +44,15 @@ export function registerSettings() {
 		type: Boolean,
 	});
 
+	game.settings.register("chat-tabs", "rollsToWebhook", {
+		name: game.i18n.localize("TC.SETTINGS.rollsToWebhook.name"),
+		hint: game.i18n.localize("TC.SETTINGS.rollsToWebhook.hint"),
+		scope: "world",
+		config: true,
+		default: false,
+		type: Boolean,
+	});
+
 	game.settings.register("chat-tabs", "hideInStreamView", {
 		name: game.i18n.localize("TC.SETTINGS.HideInStreamView.name"),
 		hint: game.i18n.localize("TC.SETTINGS.HideInStreamView.hint"),

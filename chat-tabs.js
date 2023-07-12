@@ -253,41 +253,52 @@ class TabbedChatlog {
 				chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: game.tabbedchat.currentTab.id });
 			}
 			try {
+				let webhook, message, name, img, embeds;
 				if (
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC ||
-					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE
+					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE ||
+					(chatMessage.isRoll && chatMessage.speaker.actor)
 				) {
 					const scene = game.scenes.get(chatMessage.speaker.scene);
-					const webhook =
-						scene.getFlag("chat-tabs", "webhook") || game.settings.get("chat-tabs", "icBackupWebhook");
+					webhook =
+						scene?.getFlag("chat-tabs", "webhook") || game.settings.get("chat-tabs", "icBackupWebhook");
 					if (!webhook == undefined || webhook == "") return;
 
 					const speaker = chatMessage.speaker;
 					const actor = loadActorForChatMessage(speaker);
-					const img = `${game.data.addresses.remote}/${
-						actor ? generatePortraitImageElement(actor) : game.users.get(chatMessage.user.id).avatar
-					}`;
-					const name = actor ? actor.name : speaker.alias;
+					img = actor ? generatePortraitImageElement(actor) : chatMessage.user.avatar;
+					name = actor ? actor.name : speaker.alias;
+				} else if (
+					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC ||
+					(chatMessage.isRoll && !chatMessage.speaker.actor)
+				) {
+					webhook = game.settings.get("chat-tabs", "oocWebhook");
+					if (webhook == undefined || webhook == "") return;
 
-					let message = chatMessage.content;
-					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(chatMessage);
+					img = chatMessage.user.avatar;
+					name = chatMessage.user.name;
+				}
+				if (webhook) {
+					if (chatMessage.isRoll) {
+						const title = chatMessage.flavor ? chatMessage.flavor + "\n" : "";
+						const description = `${game.i18n.localize("Roll Formula")}: ${chatMessage.rolls[0].formula} = ${
+							chatMessage.rolls[0].result
+						}`;
+						embeds = [{ title, description }];
+					}
+					if (game.modules.get("polyglot")?.active) {
+						message = convertPolyglotMessage(chatMessage);
+					} else {
+						message = chatMessage.content;
+					}
+					if (!img.includes("http")) {
+						img = game.data.addresses.remote + img;
+					}
 					sendToDiscord(webhook, {
 						content: game.tabbedchat.turndown.turndown(message),
 						username: name,
-						avatar_url: img,
-					});
-				} else if (chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC) {
-					const webhook = game.settings.get("chat-tabs", "oocWebhook");
-					if (webhook == undefined || webhook == "") return;
-
-					const img = `${game.data.addresses.remote}/${game.users.get(chatMessage.user.id).avatar}`;
-
-					let message = chatMessage.content;
-					if (game.modules.get("polyglot")?.active) message = convertPolyglotMessage(chatMessage);
-					sendToDiscord(webhook, {
-						content: game.tabbedchat.turndown.turndown(message),
-						username: game.users.get(chatMessage.user.id).name,
-						avatar_url: img,
+						avatar_url: encodeURI(img),
+						embeds,
 					});
 				}
 			} catch (error) {
@@ -456,7 +467,7 @@ function loadActorForChatMessage(speaker) {
 }
 
 function generatePortraitImageElement(actor) {
-	return actor.token ? actor.token.img : actor.token.img;
+	return actor.token ? actor.token.texture.src : actor.img;
 }
 
 Hooks.on("renderSceneConfig", (app, html, data) => {
