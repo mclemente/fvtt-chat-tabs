@@ -290,7 +290,7 @@ class TabbedChatlog {
 					} else {
 						message = chatMessage.content;
 					}
-					if (!img.includes("http")) {
+					if (!/https?:\/\//g.test(img)) {
 						img = game.data.addresses.remote + img;
 					}
 					sendToDiscord(webhook, {
