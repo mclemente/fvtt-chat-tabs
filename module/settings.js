@@ -186,7 +186,7 @@ class TabbedChatTabSettings extends FormApplication {
 	static get defaultOptions() {
 		return mergeObject(super.defaultOptions, {
 			id: "tabbeb-chat-tabs-form",
-			title: `Tabbed Chatlog: ${game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name")}`,
+			title: `Customizable Chat Tabs: ${game.i18n.localize("TC.SETTINGS.ChatTabsSettings.name")}`,
 			template: "./modules/chat-tabs/templates/ChatTabs.hbs",
 			classes: ["form", "tabbed-chat"],
 			width: 640,

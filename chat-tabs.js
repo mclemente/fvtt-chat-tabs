@@ -54,7 +54,7 @@ class ChatTab {
 
 	getUserPermission(userId = game.userId) {
 		if (typeof userId !== "string") {
-			throw new Error("Tabbed Chatlog | getUserPermission: userId must be a string");
+			throw new Error("Customizable Chat Tabs | getUserPermission: userId must be a string");
 		}
 
 		let role = game.users.get(userId).role;
@@ -303,7 +303,7 @@ class TabbedChatlog {
 					});
 				}
 			} catch (error) {
-				console.error(`Tabbed Chatlog | Error trying to send message through the webhook.`, error);
+				console.error(`Customizable Chat Tabs | Error trying to send message through the webhook.`, error);
 			}
 		});
 
@@ -327,7 +327,7 @@ class TabbedChatlog {
 
 	getTabByID(tabId) {
 		if (typeof tabId !== "string") {
-			throw new Error("Tabbed Chatlog | getTabByID: tabId must be a string");
+			throw new Error("Customizable Chat Tabs | getTabByID: tabId must be a string");
 		}
 		for (const tab of this.tabs) {
 			if (tab.id === tabId) return tab;
