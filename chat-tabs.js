@@ -268,7 +268,6 @@ class TabbedChatlog {
 					const speaker = chatMessage.speaker;
 					const actor = loadActorForChatMessage(speaker);
 					img = actor ? generatePortraitImageElement(actor) : chatMessage.user.avatar;
-					name = actor ? actor.name : speaker.alias;
 				} else if (
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC ||
 					(sendRoll && !chatMessage.speaker.actor)
@@ -277,7 +276,6 @@ class TabbedChatlog {
 					if (webhook == undefined || webhook == "") return;
 
 					img = chatMessage.user.avatar;
-					name = chatMessage.user.name;
 				}
 				if (webhook) {
 					if (sendRoll) {
@@ -297,7 +295,7 @@ class TabbedChatlog {
 					}
 					sendToDiscord(webhook, {
 						content: game.tabbedchat.turndown.turndown(message),
-						username: name,
+						username: chatMessage.alias,
 						avatar_url: encodeURI(img),
 						embeds,
 					});
