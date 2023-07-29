@@ -111,19 +111,6 @@ class ChatTab {
 		return Boolean(this.sources.find(source => source.canShowMessage(message)))
 	}
 
-	reset() {
-		const messagesToHide = []
-		const messagesToShow = []
-
-		game.messages.forEach(message => {
-			this.isMessageVisible(message) ? messagesToShow.push(message) : messagesToHide.push(message)
-		})
-
-		const messageSelector = (message) => `#chat-log .message[data-message-id=${message.id}]`
-		$(messagesToHide.map(messageSelector).join(', ')).css({display: 'none'})
-		$(messagesToShow.map(messageSelector).join(', ')).css({display: ''})
-	}
-
 	setNotification() {
 		const nTabs = $("nav.tabbedchatlog.tabs > a.item").length;
 		$(`#${this.id}Notification`).css({ display: "" });
@@ -339,7 +326,7 @@ class TabbedChatlog {
 			initial: "ic",
 			callback: (event, html, tabName) => {
 				this.currentTab = tabName;
-				this.currentTab.reset()
+				game.messages.forEach(message => this.currentTab.handle(message))
 				if (!this.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
 				else if ($("#chat-message").is(":disabled")) $("#chat-message").prop("disabled", false);
 
