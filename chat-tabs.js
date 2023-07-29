@@ -1,11 +1,21 @@
 import { TurndownService } from "./module/TurndownService.js";
-import { RW_PERMISSIONS, registerSettings } from "./module/settings.js";
+import {RW_PERMISSIONS, registerSettings, ChatTabSource} from "./module/settings.js";
+
+
+addEventListener("load", (event) => {
+	window.tabbedchat = {
+		register: (key, label = '', hint = '') => {
+			setTimeout(() => game.tabbedchat.register({key, hint, label}), 0)
+		}
+	}
+});
+
 
 class ChatTab {
-	constructor({ id, name, messageTypes = {}, permissions = {} }) {
+	constructor({ id, name, permissions = {}, sources = []}) {
 		this.id = id;
 		this.name = name;
-		this.messageTypes = this.createMessageTypes(messageTypes);
+		this.sources = game.tabbedchat.sources.filter(source => sources.includes(source.key))
 		const roles = this.createRolePermissions(permissions.roles);
 		const users = this.createUserPermissions(permissions.users);
 		this.permissions = {
@@ -14,15 +24,6 @@ class ChatTab {
 		};
 	}
 
-	createMessageTypes(messageTypes = {}) {
-		return mergeObject(
-			Object.keys(CONST.CHAT_MESSAGE_TYPES).reduce((acc, key) => {
-				acc[key] = false;
-				return acc;
-			}, {}),
-			messageTypes
-		);
-	}
 	createRolePermissions(roles = {}) {
 		return mergeObject(
 			Object.assign(
@@ -79,6 +80,15 @@ class ChatTab {
 		return this.getUserPermission(userId) > 1;
 	}
 
+	/**
+	 * Returns if the message type is visible on the tab.
+	 * @param {string} messageID
+	 * @returns {Element | null}
+	 */
+	getMessageEl(messageID) {
+		return document.querySelector(`.message.chat-message[data-message-id="${messageID}"]`)
+	}
+
 	isTabVisible(userId = game.userId) {
 		return this.getUserPermission(userId) > 0;
 	}
@@ -89,8 +99,7 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	isMessageTypeVisible(messageType) {
-		const type = invertObject(CONST.CHAT_MESSAGE_TYPES)[messageType];
-		return this.messageTypes[type];
+		return Boolean(this.sources.find(source => source.messageTypeID === messageType))
 	}
 
 	/**
@@ -99,32 +108,62 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	isMessageVisible(message) {
-		const messageType = message.type;
-		if (!this.isMessageTypeVisible(messageType)) return false;
-		if (
-			message.speaker.scene &&
-			game.settings.get("chat-tabs", "perScene") &&
-			(messageType == CONST.CHAT_MESSAGE_TYPES.IC || messageType == CONST.CHAT_MESSAGE_TYPES.EMOTE) &&
-			message.speaker.scene != game.user.viewedScene
-		) {
-			return false;
-		}
-		const tabExclusiveID = message.flags["chat-tabs"]?.tabExclusive;
-		if (
-			game.settings.get("chat-tabs", "tabExclusive") &&
-			tabExclusiveID &&
-			game.tabbedchat.currentTab.id !== tabExclusiveID &&
-			game.tabbedchat.tabs[tabExclusiveID]
-		) {
-			return false;
-		}
-		if (message.blind && message.whisper.find((element) => element == game.userId) == undefined) return false;
-		return true;
+		return Boolean(this.sources.find(source => source.canShowMessage(message)))
+	}
+
+	reset() {
+		const messagesToHide = []
+		const messagesToShow = []
+
+		game.messages.forEach(message => {
+			this.isMessageVisible(message) ? messagesToShow.push(message) : messagesToHide.push(message)
+		})
+
+		const messageSelector = (message) => `#chat-log .message[data-message-id=${message.id}]`
+		$(messagesToHide.map(messageSelector).join(', ')).css({display: 'none'})
+		$(messagesToShow.map(messageSelector).join(', ')).css({display: ''})
 	}
 
 	setNotification() {
 		const nTabs = $("nav.tabbedchatlog.tabs > a.item").length;
 		$(`#${this.id}Notification`).css({ display: "" });
+	}
+
+	/**
+	 * Set message css property display
+	 * @param {string} messageID
+	 * @param {string} display
+	 */
+	setMessageDisplay(messageID, display = '') {
+		$(`#chat-log .message[data-message-id=${messageID}]`).css({ display });
+	}
+
+	/**
+	 * Set message visible
+	 * @param {Object} message
+	 */
+	show(message) {
+		return this.setMessageDisplay(message.id, '')
+	}
+
+	/**
+	 * Set message hidden
+	 * @param {Object} message
+	 */
+	hide(message) {
+		return this.setMessageDisplay(message.id, 'none')
+	}
+
+	/**
+	 * Set message visibility based on tab sources
+	 * Return message visibility state
+	 * @param {Object} message
+	 * @returns {Boolean}
+	 */
+	handle(message) {
+		const visible = this.isMessageVisible(message)
+		visible ? this.show(message) : this.hide(message)
+		return visible
 	}
 
 	get html() {
@@ -137,14 +176,22 @@ class ChatTab {
 	}
 }
 
+
 class TabbedChatlog {
-	constructor(tabs) {
-		this.tabs = tabs;
-		this._currentTab = tabs[0];
+	constructor() {
+		this.sources = ChatTabSource.getCoreSources()
+		this.tabs = [];
+		this._currentTab = undefined;
 	}
 	turndown = new TurndownService();
 
 	chatTab = ChatTab;
+
+	setup() {
+		this.tabs = game.settings.get("chat-tabs", "tabs").map(tab => new ChatTab({ ...tab }))
+		this._currentTab = this.tabs[0]
+		this.initHooks()
+	}
 
 	initHooks() {
 		Hooks.on("renderChatLog", async function (chatLog, html, user) {
@@ -161,61 +208,30 @@ class TabbedChatlog {
 			});
 		});
 
-		Hooks.on("renderChatMessage", (chatMessage, html, data) => {
+		Hooks.on("renderChatMessage", (message, html, data) => {
 			if (game.tabbedchat.isStreaming) return;
-			html[0].setAttribute("data-tc-type", data.message.type);
-			if (
-				[
-					CONST.CHAT_MESSAGE_TYPES.OTHER,
-					CONST.CHAT_MESSAGE_TYPES.IC,
-					CONST.CHAT_MESSAGE_TYPES.EMOTE,
-					CONST.CHAT_MESSAGE_TYPES.ROLL,
-				].includes(data.message.type) &&
-				data.message.speaker.scene != undefined &&
-				game.settings.get("chat-tabs", "perScene")
-			) {
-				html[0].setAttribute("data-tc-scene", data.message.speaker.scene);
-			}
-			if (chatMessage.flags["chat-tabs"]?.tabExclusive) {
-				html[0].setAttribute("data-tc-tab", chatMessage.flags["chat-tabs"]?.tabExclusive);
-			}
-			if (game.system.id === "pf2e" && chatMessage.content.includes(`section class="damage-taken"`)) {
+
+			if (game.system.id === "pf2e" && message.content.includes(`section class="damage-taken"`)) {
 				html[0].classList.add("emote");
 			}
 
-			if (!game.tabbedchat.currentTab.isMessageVisible(chatMessage)) html.css({ display: "none" });
-		});
-
-		Hooks.on("diceSoNiceRollComplete", (id) => {
-			const currentTab = game.tabbedchat.currentTab;
-			if (!currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.ROLL)) {
-				$(`#chat-log .message[data-message-id=${id}]`).css({ display: "none" });
+			if (!game.tabbedchat.currentTab.isMessageVisible(message)) {
+				html.css({display: 'none'});
 			}
 		});
 
-		Hooks.on("createChatMessage", (chatMessage, options, userId) => {
-			const sceneMatches = !chatMessage.speaker.scene || chatMessage.speaker.scene === game.user?.viewedScene;
-			const currentTab = game.tabbedchat.currentTab;
-			if (sceneMatches && currentTab.isMessageTypeVisible(chatMessage.type)) return;
+		Hooks.on("diceSoNiceRollComplete", (messageID) => {
+			const message = game.messages.find(message => message.id === messageID)
+			game.tabbedchat.currentTab.handle(message)
+		});
 
-			const firstValidTab = game.tabbedchat.getValidTab(chatMessage);
-			if (!firstValidTab) return;
-			if (
-				!chatMessage.flags["chat-tabs"]?.tabExclusive &&
-				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
-				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
-			) {
-				chatMessage.updateSource({
-					["flags.chat-tabs.tabExclusive"]: game.tabbedchat.tabs[firstValidTab].id,
-				});
+		Hooks.on("createChatMessage", (message, options, userId) => {
+			const messageTabs = this.tabs.filter(tab => tab.isMessageVisible(message))
+			messageTabs.forEach(tab => tab.setNotification())
+
+			if (messageTabs.length && game.settings.get("chat-tabs", "autoNavigate")) {
+				game.tabbedchat.tabsController.activate(messageTabs[0].id, { triggerCallback: true });
 			}
-			if (
-				sceneMatches &&
-				!game.tabbedchat.currentTab.isMessageVisible(chatMessage) &&
-				game.settings.get("chat-tabs", "autoNavigate")
-			) {
-				game.tabbedchat.tabsController.activate(firstValidTab, { triggerCallback: true });
-			} else game.tabbedchat.tabs[firstValidTab].setNotification();
 		});
 
 		Hooks.on("preCreateChatMessage", (chatMessage, content, options, userId) => {
@@ -245,13 +261,6 @@ class TabbedChatlog {
 			}
 
 			if (chatMessage.whisper?.length) return;
-			if (
-				game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type) &&
-				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
-				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER
-			) {
-				chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: game.tabbedchat.currentTab.id });
-			}
 			try {
 				let webhook, message, name, img, embeds;
 				const sendRoll = chatMessage.isRoll && game.settings.get("chat-tabs", "rollsToWebhook");
@@ -323,16 +332,6 @@ class TabbedChatlog {
 		this._currentTab = tab;
 	}
 
-	getTabByID(tabId) {
-		if (typeof tabId !== "string") {
-			throw new Error("Customizable Chat Tabs | getTabByID: tabId must be a string");
-		}
-		for (const tab of this.tabs) {
-			if (tab.id === tabId) return tab;
-		}
-		return null;
-	}
-
 	bindHTML(html) {
 		this.tabsController = new TabsV2({
 			navSelector: ".tabs",
@@ -340,60 +339,7 @@ class TabbedChatlog {
 			initial: "ic",
 			callback: (event, html, tabName) => {
 				this.currentTab = tabName;
-
-				const setVisibility = (selector, messageType) => {
-					const visible = this.currentTab.isMessageTypeVisible(messageType);
-					const perScene = game.settings.get("chat-tabs", "perScene");
-					const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
-					if (
-						[
-							CONST.CHAT_MESSAGE_TYPES.IC,
-							CONST.CHAT_MESSAGE_TYPES.EMOTE,
-							CONST.CHAT_MESSAGE_TYPES.ROLL,
-						].includes(messageType)
-					) {
-						// selector.filter(".scenespecific").css({ display: "none" });
-						// selector.not(".scenespecific").css({ display: visible ? "" : "none" });
-						// selector.filter(".scene" + game.user.viewedScene).css({ display: visible ? "" : "none" });
-						if (perScene && !tabExclusive) {
-							selector.filter(`[data-tc-scene]`).css({ display: "none" });
-							selector
-								.filter(`[data-tc-scene="${game.user.viewedScene}"]`)
-								.css({ display: visible ? "" : "none" });
-						} else if (!perScene && tabExclusive) {
-							selector.filter(`[data-tc-tab]`).css({ display: "none" });
-							selector
-								.filter(`[data-tc-tab=${this.currentTab.id}]`)
-								.css({ display: visible ? "" : "none" });
-						} else if (perScene && tabExclusive) {
-							selector.filter(`[data-tc-scene]`).css({ display: "none" });
-							selector.filter(`[data-tc-tab]`).css({ display: "none" });
-							selector
-								.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`)
-								.css({ display: visible ? "" : "none" });
-							for (let message of selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`)) {
-								const tabId = message.dataset.tcTab;
-								if (tabId && !this.getTabByID(tabId) && tabId !== this.currentTab.id) {
-									selector
-										.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab="${tabId}"]`)
-										.css({ display: visible ? "" : "none" });
-								}
-							}
-						}
-						if (messageType === CONST.CHAT_MESSAGE_TYPES.ROLL) {
-							selector.filter(".gm-roll-hidden").attr("hidden", true);
-						}
-						return;
-					}
-					// OTHER, OOC, WHISPER
-					selector.css({ display: visible ? "" : "none" });
-				};
-
-				Object.values(CONST.CHAT_MESSAGE_TYPES).forEach((value) => {
-					const selector = $(`[data-tc-type=${value}]`);
-					if (selector.length) setVisibility(selector, value);
-				});
-
+				this.currentTab.reset()
 				if (!this.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
 				else if ($("#chat-message").is(":disabled")) $("#chat-message").prop("disabled", false);
 
@@ -416,14 +362,23 @@ class TabbedChatlog {
 		return toPrepend;
 	}
 
-	getValidTab(message) {
-		return Object.keys(this.tabs).find((key) => {
-			return this.tabs[key].isMessageVisible(message);
-		});
-	}
-
 	get isStreaming() {
 		return game.settings.get("chat-tabs", "hideInStreamView") && window.location.href.endsWith("/stream");
+	}
+
+	register({key, messageTypeID = undefined, label = '', hint = ''}) {
+		const _key = `module.${key}`
+
+		this.sources.push(
+			new ChatTabSource({
+				hint,
+				messageTypeID,
+				key: _key,
+				label: label || _key,
+			})
+		)
+
+		return messageTypeID
 	}
 }
 
@@ -532,16 +487,16 @@ Hooks.on("init", () => {
 	);
 });
 
-Hooks.on("setup", () => {
+
+Hooks.on("init", () => {
 	registerSettings();
-	const tabs = game.settings.get("chat-tabs", "tabs");
-	const instancedTabs = [];
-	tabs.forEach((tab) => {
-		instancedTabs.push(new ChatTab({ ...tab }));
-	});
-	game.tabbedchat = new TabbedChatlog(instancedTabs);
-	game.tabbedchat.initHooks();
+	game.tabbedchat = new TabbedChatlog();
 });
+
+Hooks.on("setup", () => {
+	game.tabbedchat.setup()
+});
+
 
 Hooks.on("ready", () => {
 	if (game.modules.get("narrator-tools")?.active) NarratorTools._msgtype = 2;
