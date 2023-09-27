@@ -515,3 +515,5 @@ Hooks.on("setup", () => {
 Hooks.on("ready", () => {
 	if (game.modules.get("narrator-tools")?.active) NarratorTools._msgtype = 2;
 });
+
+Hooks.on("renderSettingsConfig", renderSettingsConfigHandler);
