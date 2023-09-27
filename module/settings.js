@@ -159,20 +159,7 @@ export class ChatTabSource {
 
 	static getCoreSources() {
 		return Object.entries(CONST.CHAT_MESSAGE_TYPES).map(([key, messageTypeID]) => {
-			let sourceClass;
-
-			switch (key) {
-				case "OTHER": {
-					sourceClass = ChatTabSourceOther;
-					break;
-				}
-
-				default: {
-					sourceClass = ChatTabSource;
-				}
-			}
-
-			return new sourceClass({
+			return new ChatTabSource({
 				key,
 				messageTypeID,
 				hint: game.i18n.localize(`TC.MESSAGE_TYPES.${key}.hint`),
