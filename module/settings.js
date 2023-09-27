@@ -186,17 +186,26 @@ export class ChatTabSource {
 	 * @param {Object} message
 	 * @returns {Boolean}
 	 */
-	canShowMessage(message) {
+	canShowMessage(message, tabId) {
 		return (
-			this.canShowMessageByFlags(message) &&
-			this.canShowMessageType(message) &&
-			this.canShowMessageExclusively(message) &&
-			this.canShowMessageInScene(message) &&
-			this.canShowPrivateMessage(message)
+			this._canShowMessageByFlags(message) &&
+			this._canShowMessageType(message) &&
+			this._canShowMessageExclusively(message, tabId) &&
+			this._canShowMessageInScene(message) &&
+			this._canShowPrivateMessage(message)
 		);
 	}
 
-	canShowMessageByFlags(message) {
+	canShowMessageNonExclusively(message) {
+		return (
+			this._canShowMessageByFlags(message) &&
+			this._canShowMessageType(message) &&
+			this._canShowMessageInScene(message) &&
+			this._canShowPrivateMessage(message)
+		);
+	}
+
+	_canShowMessageByFlags(message) {
 		return this.isCore() ? !message.flags["module"] : message.flags["module"] === this.key.replace("module.", "");
 	}
 
@@ -205,15 +214,15 @@ export class ChatTabSource {
 	 * @param {Object} message
 	 * @returns {Boolean}
 	 */
-	canShowMessageExclusively(message) {
+	_canShowMessageExclusively(message, tabId) {
 		if (!game.settings.get("chat-tabs", "tabExclusive")) {
 			return true;
 		}
 
 		const messageForTabID = message.flags["chat-tabs"]?.tabExclusive;
-		const messageForTab = messageForTabID && game.chatTabs.tabs[messageForTabID];
-		const messageForCurrentTab = messageForTabID && game.chatTabs.currentTab.id === messageForTabID;
-		return !messageForTab || messageForCurrentTab;
+		const tabExists = messageForTabID && !!game.chatTabs.tabs.find((tab) => tab.id === messageForTabID);
+		const messageForCurrentTab = messageForTabID && tabId === messageForTabID;
+		return !messageForTabID || !tabExists || messageForCurrentTab;
 	}
 
 	/**
@@ -221,7 +230,7 @@ export class ChatTabSource {
 	 * @param {Object} message
 	 * @returns {Boolean}
 	 */
-	canShowMessageInScene(message) {
+	_canShowMessageInScene(message) {
 		if (!game.settings.get("chat-tabs", "perScene")) {
 			return true;
 		}
@@ -236,8 +245,8 @@ export class ChatTabSource {
 	 * @param {Object} message
 	 * @returns {Boolean}
 	 */
-	canShowMessageType(message) {
-		return !this.messageTypeID || this.messageTypeID === message.type;
+	_canShowMessageType(message) {
+		return this.messageTypeID === message.type;
 	}
 
 	/**
@@ -245,7 +254,7 @@ export class ChatTabSource {
 	 * @param {Object} message
 	 * @returns {Boolean}
 	 */
-	canShowPrivateMessage(message) {
+	_canShowPrivateMessage(message) {
 		return !message.blind || message.whisper.includes(game.userId);
 	}
 

@@ -103,7 +103,7 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	isMessageVisible(message) {
-		return Boolean(this.sources.find((source) => source.canShowMessage(message)));
+		return Boolean(this.sources.find((source) => source.canShowMessage(message, this.id)));
 	}
 
 	setNotification() {
