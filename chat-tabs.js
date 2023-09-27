@@ -500,6 +500,9 @@ Hooks.on("init", () => {
 		},
 		"OVERRIDE"
 	);
+});
+
+Hooks.on("i18nInit", () => {
 	registerSettings();
 	game.tabbedchat = game.chatTabs = new TabbedChatlog();
 	Hooks.callAll("chat-tabs.init");
