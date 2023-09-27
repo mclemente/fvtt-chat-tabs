@@ -250,26 +250,6 @@ export class ChatTabSource {
 	}
 }
 
-class ChatTabSourceOther extends ChatTabSource {
-	/**
-	 * Returns if the message cannot be show any another sources.
-	 * @param {Object} message
-	 * @returns {Boolean}
-	 */
-	canShowMessage(message) {
-		const hasSource = game.chatTabs.sources
-			.filter((source) => source.key !== this.key)
-			.find(
-				(source) =>
-					source.canShowMessageByFlags(message) &&
-					source.canShowMessageType(message) &&
-					this.canShowMessageExclusively(message)
-			);
-
-		return !hasSource && this.canShowMessageInScene(message) && this.canShowPrivateMessage(message);
-	}
-}
-
 class TabbedChatTabSourceSettings extends ChatTabSource {
 	constructor({ value = false, ...data }) {
 		super(data);
