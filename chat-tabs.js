@@ -36,6 +36,11 @@ class ChatTab {
 		);
 	}
 	createUserPermissions(users = {}) {
+		Object.keys(users)
+			.filter((id) => !game.users.get(id))
+			.forEach((id) => {
+				delete users[id];
+			});
 		return mergeObject(
 			Object.assign(
 				Array.from(game.users.keys())
