@@ -95,6 +95,20 @@ export function registerSettings() {
 		},
 	});
 
+	game.settings.register("chat-tabs", "tabExclusiveOOC", {
+		name: game.i18n.localize("TC.SETTINGS.tabExclusiveOOC.name"),
+		hint: game.i18n.format("TC.SETTINGS.tabExclusiveOOC.hint", {
+			setting: game.i18n.localize("TC.SETTINGS.tabExclusive.name"),
+		}),
+		scope: "world",
+		config: true,
+		default: false,
+		type: Boolean,
+		onChange: () => {
+			game.chatTabs.tabsController.activate(game.chatTabs.currentTab.id, { triggerCallback: true });
+		},
+	});
+
 	game.settings.register("chat-tabs", "tabs", {
 		scope: "world",
 		config: false,
@@ -117,6 +131,21 @@ export function registerSettings() {
 		],
 		type: Array,
 		requiresReload: true,
+	});
+}
+
+export function disableCheckbox(checkbox, boolean) {
+	checkbox.prop("disabled", !boolean);
+}
+
+export function renderSettingsConfigHandler(settingsConfig, html) {
+	// Chat Output setting changes
+	const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
+	const CheckboxExclusive = html.find('input[name="chat-tabs.tabExclusive"]');
+	const CheckboxOOC = html.find('input[name="chat-tabs.tabExclusiveOOC"]');
+	disableCheckbox(CheckboxOOC, tabExclusive);
+	CheckboxExclusive.on("change", (event) => {
+		disableCheckbox(CheckboxOOC, event.target.checked);
 	});
 }
 

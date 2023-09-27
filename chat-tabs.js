@@ -242,6 +242,23 @@ class TabbedChatlog {
 			}
 
 			if (chatMessage.whisper?.length) return;
+			const isValidMessageType =
+				(game.settings.get("chat-tabs", "tabExclusiveOOC") &&
+					chatMessage.type === CONST.CHAT_MESSAGE_TYPES.OOC) ||
+				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC ||
+				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER;
+			if (!isValidMessageType) return;
+			const isValidTab = Boolean(
+				game.chatTabs.currentTab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
+			);
+			if (isValidTab) {
+				chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: game.chatTabs.currentTab.id });
+			} else {
+				const validTab = game.chatTabs.tabs.find((tab) =>
+					tab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
+				);
+				if (validTab) chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: validTab.id });
+			}
 			try {
 				const WEBHOOKS = {
 					scene: game.scenes.get(chatMessage.speaker.scene)?.getFlag("chat-tabs", "webhook") ?? "",

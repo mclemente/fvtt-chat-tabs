@@ -39,6 +39,11 @@
 			"tabExclusive": {
 				"name": "Tab-exclusive Messages",
 				"hint": "Makes messages exclusive to the chat tab they were posted. Only exceptions are OOC and Whisper messages. The message is assigned to the tab's ID, not it's name, so beware with deleting tabs."
+			},
+
+			"tabExclusiveOOC": {
+				"name": "Tab-exclusive OOC Messages",
+				"hint": "Allows OOC messages to be affected by the {setting} setting."
 			}
 		},
 		"TABS": {
