@@ -193,7 +193,9 @@ export class ChatTabSource {
 	}
 
 	_canShowMessageByFlags(message) {
-		return this.isCore() ? !message.flags["module"] : message.flags["module"] === this.key.replace("module.", "");
+		return this.isCore()
+			? !message.flags["chat-tabs"]["module"]
+			: message.flags["chat-tabs"]["module"] === this.key.replace("module.", "");
 	}
 
 	/**
@@ -233,7 +235,7 @@ export class ChatTabSource {
 	 * @returns {Boolean}
 	 */
 	_canShowMessageType(message) {
-		return this.messageTypeID === message.type;
+		return isNaN(this.messageTypeID) || this.messageTypeID === message.type;
 	}
 
 	/**

@@ -369,18 +369,14 @@ class TabbedChatlog {
 	}
 
 	register({ key, messageTypeID = undefined, label = "", hint = "" }) {
-		const _key = `module.${key}`;
-
+		if (!key) return;
 		this.sources.push(
 			new ChatTabSource({
 				hint,
-				messageTypeID,
-				key: _key,
-				label: label || _key,
+				key: `module.${key}`,
+				label: label || game.modules.get(key)?.title || key,
 			})
 		);
-
-		return messageTypeID;
 	}
 }
 
