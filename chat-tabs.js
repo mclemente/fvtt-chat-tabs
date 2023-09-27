@@ -243,17 +243,21 @@ class TabbedChatlog {
 
 			if (chatMessage.whisper?.length) return;
 			try {
-				let webhook, message, name, img, embeds;
+				const WEBHOOKS = {
+					scene: game.scenes.get(chatMessage.speaker.scene)?.getFlag("chat-tabs", "webhook") ?? "",
+					backupIC: game.settings.get("chat-tabs", "icBackupWebhook"),
+					OOC: game.settings.get("chat-tabs", "oocWebhook"),
+				};
+				if (Object.values(WEBHOOKS).every((v) => v === "")) return;
+				let webhook, message, img, embeds;
 				const sendRoll = chatMessage.isRoll && game.settings.get("chat-tabs", "rollsToWebhook");
 				if (
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC ||
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE ||
 					(sendRoll && chatMessage.speaker.actor)
 				) {
-					const scene = game.scenes.get(chatMessage.speaker.scene);
-					webhook =
-						scene?.getFlag("chat-tabs", "webhook") || game.settings.get("chat-tabs", "icBackupWebhook");
-					if (!webhook == undefined || webhook == "") return;
+					webhook = WEBHOOKS.scene || WEBHOOKS.backupIC;
+					if (!webhook) return;
 
 					const speaker = chatMessage.speaker;
 					const actor = loadActorForChatMessage(speaker);
@@ -262,8 +266,8 @@ class TabbedChatlog {
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC ||
 					(sendRoll && !chatMessage.speaker.actor)
 				) {
-					webhook = game.settings.get("chat-tabs", "oocWebhook");
-					if (webhook == undefined || webhook == "") return;
+					webhook = WEBHOOKS.OOC;
+					if (!webhook) return;
 
 					img = chatMessage.user.avatar;
 				}
