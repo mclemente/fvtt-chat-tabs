@@ -175,8 +175,8 @@ export class ChatTabSource {
 			return new sourceClass({
 				key,
 				messageTypeID,
-				hint: "",
-				label: key,
+				hint: game.i18n.localize(`TC.MESSAGE_TYPES.${key}.hint`),
+				label: game.i18n.localize(`TC.MESSAGE_TYPES.${key}.label`),
 			});
 		});
 	}
@@ -310,14 +310,6 @@ class TabbedChatTabSettings extends FormApplication {
 		Object.keys(RW_PERMISSIONS).forEach((key) => {
 			this.levels[[RW_PERMISSIONS[key]]] = key === "EMPTY" ? "" : game.i18n.localize(`TC.PERMISSIONS.${key}`);
 		});
-		Object.keys(this.tabs).forEach((key) => {
-			this.tabs[key].sources
-				.filter((source) => source.isCore())
-				.forEach((source) => {
-					source.label = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.label`);
-					source.hint = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.hint`);
-				});
-		});
 
 		Object.keys(this.tabs).forEach((key) => {
 			Object.keys(this.tabs[key].permissions.roles).forEach((id) => {
@@ -413,12 +405,6 @@ class TabbedChatTabSettings extends FormApplication {
 		html.find("a[data-action=add-tab]").on("click", (event) => {
 			this.changeTabs = this.tabs.length;
 			const newTab = deepClone(this.tabStructure);
-			newTab.sources
-				.filter((source) => source.isCore())
-				.forEach((source) => {
-					source.label = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.label`);
-					source.hint = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.hint`);
-				});
 			Object.keys(newTab.permissions.roles).forEach((id) => {
 				newTab.permissions.roles[id] = {
 					label: this.roles[id],
