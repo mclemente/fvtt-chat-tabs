@@ -27,14 +27,15 @@
 				</div>
 				<h2 class="tc-collapse-label">{{localize "TC.SETTINGS.ChatTabsSettings.MessageTypes"}}</h2>
 				<div>
-					{{#each tab.messageTypes as |obj id|}}
+					{{#each tab.sources as |source id|}}
 						<div class="form-group">
-							<label>{{obj.label}}</label>
-							<input name="tabs.{{key}}.messageTypes.{{id}}" type="checkbox" {{checked obj.value}} />
-							<p class="notes">{{obj.hint}}</p>
+							<label>{{source.label}}</label>
+							<input name="tabs.{{key}}.sources.{{id}}" type="checkbox" {{checked source.value}} />
+							<p class="notes">{{source.hint}}</p>
 						</div>
 					{{/each}}
 				</div>
+
 				<h2 class="tc-collapse-label">{{localize "TC.SETTINGS.ChatTabsSettings.RolePermissions"}}</h2>
 				<div>
 					{{#each tab.permissions.roles as |obj id|}}
