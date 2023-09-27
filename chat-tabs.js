@@ -1,5 +1,5 @@
 import { TurndownService } from "./module/TurndownService.js";
-import { ChatTabSource, RW_PERMISSIONS, registerSettings } from "./module/settings.js";
+import { ChatTabSource, RW_PERMISSIONS, registerSettings, renderSettingsConfigHandler } from "./module/settings.js";
 
 class ChatTab {
 	constructor({ id, name, permissions = {}, sources = [] }) {
