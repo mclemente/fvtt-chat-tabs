@@ -466,6 +466,19 @@ Hooks.on("init", () => {
 		},
 		"OVERRIDE"
 	);
+	libWrapper.register(
+		"chat-tabs",
+		"ChatLog.prototype._onScrollLog",
+		function (event) {
+			if (!this.rendered) return;
+			const log = event.target;
+			const pct = log.scrollTop / (log.scrollHeight - log.clientHeight);
+			const jumpToBottomElement = this.element.find(".jump-to-bottom")[0];
+			jumpToBottomElement.classList.toggle("hidden", isNaN(pct) || pct > 0.99);
+			if (isNaN(pct) || pct < 0.01) return this._renderBatch(this.element, CONFIG.ChatMessage.batchSize);
+		},
+		"OVERRIDE"
+	);
 	registerSettings();
 	game.tabbedchat = game.chatTabs = new TabbedChatlog();
 	Hooks.callAll("chat-tabs.init");
