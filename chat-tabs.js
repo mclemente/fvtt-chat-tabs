@@ -1,21 +1,19 @@
 import { TurndownService } from "./module/TurndownService.js";
-import {RW_PERMISSIONS, registerSettings, ChatTabSource} from "./module/settings.js";
-
+import { ChatTabSource, RW_PERMISSIONS, registerSettings } from "./module/settings.js";
 
 addEventListener("load", (event) => {
 	window.tabbedchat = {
-		register: (key, label = '', hint = '') => {
-			setTimeout(() => game.tabbedchat.register({key, hint, label}), 0)
-		}
-	}
+		register: (key, label = "", hint = "") => {
+			setTimeout(() => game.tabbedchat.register({ key, hint, label }), 0);
+		},
+	};
 });
 
-
 class ChatTab {
-	constructor({ id, name, permissions = {}, sources = []}) {
+	constructor({ id, name, permissions = {}, sources = [] }) {
 		this.id = id;
 		this.name = name;
-		this.sources = game.tabbedchat.sources.filter(source => sources.includes(source.key))
+		this.sources = game.tabbedchat.sources.filter((source) => sources.includes(source.key));
 		const roles = this.createRolePermissions(permissions.roles);
 		const users = this.createUserPermissions(permissions.users);
 		this.permissions = {
@@ -91,7 +89,7 @@ class ChatTab {
 	 * @returns {Element | null}
 	 */
 	getMessageEl(messageID) {
-		return document.querySelector(`.message.chat-message[data-message-id="${messageID}"]`)
+		return document.querySelector(`.message.chat-message[data-message-id="${messageID}"]`);
 	}
 
 	isTabVisible(userId = game.userId) {
@@ -104,7 +102,7 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	isMessageTypeVisible(messageType) {
-		return Boolean(this.sources.find(source => source.messageTypeID === messageType))
+		return Boolean(this.sources.find((source) => source.messageTypeID === messageType));
 	}
 
 	/**
@@ -113,7 +111,7 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	isMessageVisible(message) {
-		return Boolean(this.sources.find(source => source.canShowMessage(message)))
+		return Boolean(this.sources.find((source) => source.canShowMessage(message)));
 	}
 
 	setNotification() {
@@ -126,7 +124,7 @@ class ChatTab {
 	 * @param {string} messageID
 	 * @param {string} display
 	 */
-	setMessageDisplay(messageID, display = '') {
+	setMessageDisplay(messageID, display = "") {
 		$(`#chat-log .message[data-message-id=${messageID}]`).css({ display });
 	}
 
@@ -135,7 +133,7 @@ class ChatTab {
 	 * @param {Object} message
 	 */
 	show(message) {
-		return this.setMessageDisplay(message.id, '')
+		return this.setMessageDisplay(message.id, "");
 	}
 
 	/**
@@ -143,7 +141,7 @@ class ChatTab {
 	 * @param {Object} message
 	 */
 	hide(message) {
-		return this.setMessageDisplay(message.id, 'none')
+		return this.setMessageDisplay(message.id, "none");
 	}
 
 	/**
@@ -153,9 +151,9 @@ class ChatTab {
 	 * @returns {Boolean}
 	 */
 	handle(message) {
-		const visible = this.isMessageVisible(message)
-		visible ? this.show(message) : this.hide(message)
-		return visible
+		const visible = this.isMessageVisible(message);
+		visible ? this.show(message) : this.hide(message);
+		return visible;
 	}
 
 	get html() {
@@ -168,10 +166,9 @@ class ChatTab {
 	}
 }
 
-
 class TabbedChatlog {
 	constructor() {
-		this.sources = ChatTabSource.getCoreSources()
+		this.sources = ChatTabSource.getCoreSources();
 		this.tabs = [];
 		this._currentTab = undefined;
 	}
@@ -180,9 +177,9 @@ class TabbedChatlog {
 	chatTab = ChatTab;
 
 	setup() {
-		this.tabs = game.settings.get("chat-tabs", "tabs").map(tab => new ChatTab({ ...tab }))
-		this._currentTab = this.tabs[0]
-		this.initHooks()
+		this.tabs = game.settings.get("chat-tabs", "tabs").map((tab) => new ChatTab({ ...tab }));
+		this._currentTab = this.tabs[0];
+		this.initHooks();
 	}
 
 	initHooks() {
@@ -208,18 +205,18 @@ class TabbedChatlog {
 			}
 
 			if (!game.tabbedchat.currentTab.isMessageVisible(message)) {
-				html.css({display: 'none'});
+				html.css({ display: "none" });
 			}
 		});
 
 		Hooks.on("diceSoNiceRollComplete", (messageID) => {
-			const message = game.messages.find(message => message.id === messageID)
-			game.tabbedchat.currentTab.handle(message)
+			const message = game.messages.find((message) => message.id === messageID);
+			game.tabbedchat.currentTab.handle(message);
 		});
 
 		Hooks.on("createChatMessage", (message, options, userId) => {
-			const messageTabs = this.tabs.filter(tab => tab.isMessageVisible(message))
-			messageTabs.forEach(tab => tab.setNotification())
+			const messageTabs = this.tabs.filter((tab) => tab.isMessageVisible(message));
+			messageTabs.forEach((tab) => tab.setNotification());
 
 			if (messageTabs.length && game.settings.get("chat-tabs", "autoNavigate")) {
 				game.tabbedchat.tabsController.activate(messageTabs[0].id, { triggerCallback: true });
@@ -331,7 +328,7 @@ class TabbedChatlog {
 			initial: "ic",
 			callback: (event, html, tabName) => {
 				this.currentTab = tabName;
-				game.messages.forEach(message => this.currentTab.handle(message))
+				game.messages.forEach((message) => this.currentTab.handle(message));
 				if (!this.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
 				else if ($("#chat-message").is(":disabled")) $("#chat-message").prop("disabled", false);
 
@@ -358,8 +355,8 @@ class TabbedChatlog {
 		return game.settings.get("chat-tabs", "hideInStreamView") && window.location.href.endsWith("/stream");
 	}
 
-	register({key, messageTypeID = undefined, label = '', hint = ''}) {
-		const _key = `module.${key}`
+	register({ key, messageTypeID = undefined, label = "", hint = "" }) {
+		const _key = `module.${key}`;
 
 		this.sources.push(
 			new ChatTabSource({
@@ -368,9 +365,9 @@ class TabbedChatlog {
 				key: _key,
 				label: label || _key,
 			})
-		)
+		);
 
-		return messageTypeID
+		return messageTypeID;
 	}
 }
 
@@ -479,16 +476,14 @@ Hooks.on("init", () => {
 	);
 });
 
-
 Hooks.on("init", () => {
 	registerSettings();
 	game.tabbedchat = new TabbedChatlog();
 });
 
 Hooks.on("setup", () => {
-	game.tabbedchat.setup()
+	game.tabbedchat.setup();
 });
-
 
 Hooks.on("ready", () => {
 	if (game.modules.get("narrator-tools")?.active) NarratorTools._msgtype = 2;

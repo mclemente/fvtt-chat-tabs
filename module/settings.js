@@ -102,17 +102,17 @@ export function registerSettings() {
 			{
 				id: "wmr4yRZBlboaEttp",
 				name: game.i18n.localize("TC.TABS.IC"),
-				sources: ['IC', 'EMOTE']
+				sources: ["IC", "EMOTE"],
 			},
 			{
 				id: "Q444x8op9CbsAd0u",
 				name: game.i18n.localize("TC.TABS.Rolls"),
-				sources: ['OTHER', 'ROLL']
+				sources: ["OTHER", "ROLL"],
 			},
 			{
 				id: "cHJ0rSy4uxtIjZwU", // OOC
 				name: game.i18n.localize("TC.TABS.OOC"),
-				sources: ['OOC', 'WHISPER']
+				sources: ["OOC", "WHISPER"],
 			},
 		],
 		type: Array,
@@ -120,13 +120,12 @@ export function registerSettings() {
 	});
 }
 
-
 export class ChatTabSource {
-	constructor({key, messageTypeID = undefined, hint = '', label = ''}) {
-		this.hint = hint
-		this.key = key
-		this.label = label || key
-		this.messageTypeID = messageTypeID
+	constructor({ key, messageTypeID = undefined, hint = "", label = "" }) {
+		this.hint = hint;
+		this.key = key;
+		this.label = label || key;
+		this.messageTypeID = messageTypeID;
 	}
 
 	static getCoreSources() {
@@ -134,23 +133,23 @@ export class ChatTabSource {
 			let sourceClass;
 
 			switch (key) {
-				case 'OTHER': {
-					sourceClass = ChatTabSourceOther
-					break
+				case "OTHER": {
+					sourceClass = ChatTabSourceOther;
+					break;
 				}
 
 				default: {
-					sourceClass = ChatTabSource
+					sourceClass = ChatTabSource;
 				}
 			}
 
 			return new sourceClass({
 				key,
 				messageTypeID,
-				hint: '',
-				label: key
-			})
-		})
+				hint: "",
+				label: key,
+			});
+		});
 	}
 
 	/**
@@ -159,17 +158,17 @@ export class ChatTabSource {
 	 * @returns {Boolean}
 	 */
 	canShowMessage(message) {
-		return this.canShowMessageByFlags(message) &&
+		return (
+			this.canShowMessageByFlags(message) &&
 			this.canShowMessageType(message) &&
 			this.canShowMessageExclusively(message) &&
 			this.canShowMessageInScene(message) &&
 			this.canShowPrivateMessage(message)
+		);
 	}
 
 	canShowMessageByFlags(message) {
-		return this.isCore()
-			? !message.flags['module']
-			: message.flags['module'] === this.key.replace('module.', '')
+		return this.isCore() ? !message.flags["module"] : message.flags["module"] === this.key.replace("module.", "");
 	}
 
 	/**
@@ -179,13 +178,13 @@ export class ChatTabSource {
 	 */
 	canShowMessageExclusively(message) {
 		if (!game.settings.get("chat-tabs", "tabExclusive")) {
-			return true
+			return true;
 		}
 
-		const messageForTabID = message.flags["chat-tabs"]?.tabExclusive
-		const messageForTab = messageForTabID && game.tabbedchat.tabs[messageForTabID]
+		const messageForTabID = message.flags["chat-tabs"]?.tabExclusive;
+		const messageForTab = messageForTabID && game.tabbedchat.tabs[messageForTabID];
 		const messageForCurrentTab = messageForTabID && game.tabbedchat.currentTab.id === messageForTabID;
-		return !messageForTab || messageForCurrentTab
+		return !messageForTab || messageForCurrentTab;
 	}
 
 	/**
@@ -195,12 +194,12 @@ export class ChatTabSource {
 	 */
 	canShowMessageInScene(message) {
 		if (!game.settings.get("chat-tabs", "perScene")) {
-			return true
+			return true;
 		}
 
-		const messageFromScene = [CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE].includes(message.type)
-		const sceneNotChanged = message.speaker.scene && message.speaker.scene === game.user.viewedScene
-		return !messageFromScene || sceneNotChanged
+		const messageFromScene = [CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE].includes(message.type);
+		const sceneNotChanged = message.speaker.scene && message.speaker.scene === game.user.viewedScene;
+		return !messageFromScene || sceneNotChanged;
 	}
 
 	/**
@@ -209,7 +208,7 @@ export class ChatTabSource {
 	 * @returns {Boolean}
 	 */
 	canShowMessageType(message) {
-		return !this.messageTypeID || this.messageTypeID === message.type
+		return !this.messageTypeID || this.messageTypeID === message.type;
 	}
 
 	/**
@@ -218,14 +217,13 @@ export class ChatTabSource {
 	 * @returns {Boolean}
 	 */
 	canShowPrivateMessage(message) {
-		return !message.blind || message.whisper.includes(game.userId)
+		return !message.blind || message.whisper.includes(game.userId);
 	}
 
 	isCore() {
-		return !this.key.startsWith('module.')
+		return !this.key.startsWith("module.");
 	}
 }
-
 
 class ChatTabSourceOther extends ChatTabSource {
 	/**
@@ -235,21 +233,24 @@ class ChatTabSourceOther extends ChatTabSource {
 	 */
 	canShowMessage(message) {
 		const hasSource = game.tabbedchat.sources
-			.filter(source => source.key !== this.key)
-			.find(source => source.canShowMessageByFlags(message) && source.canShowMessageType(message) && this.canShowMessageExclusively(message))
+			.filter((source) => source.key !== this.key)
+			.find(
+				(source) =>
+					source.canShowMessageByFlags(message) &&
+					source.canShowMessageType(message) &&
+					this.canShowMessageExclusively(message)
+			);
 
-		return !hasSource && this.canShowMessageInScene(message) && this.canShowPrivateMessage(message)
+		return !hasSource && this.canShowMessageInScene(message) && this.canShowPrivateMessage(message);
 	}
 }
-
 
 class TabbedChatTabSourceSettings extends ChatTabSource {
-	constructor({value = false, ...data}) {
+	constructor({ value = false, ...data }) {
 		super(data);
-		this.value = value
+		this.value = value;
 	}
 }
-
 
 class TabbedChatTabSettings extends FormApplication {
 	constructor(object, options = {}) {
@@ -261,8 +262,9 @@ class TabbedChatTabSettings extends FormApplication {
 		this.tabs = deepClone(game.settings.get("chat-tabs", "tabs"));
 		const chatTab = game.tabbedchat.chatTab.prototype;
 		this.tabs.forEach((tab) => {
-			const sourcesFromOldConfig = tab.messageTypes && Object.keys(tab.messageTypes).filter(key => tab.messageTypes[key])
-			tab.sources = TabbedChatTabSettings.getSources(tab.sources || sourcesFromOldConfig || [])
+			const sourcesFromOldConfig =
+				tab.messageTypes && Object.keys(tab.messageTypes).filter((key) => tab.messageTypes[key]);
+			tab.sources = TabbedChatTabSettings.getSources(tab.sources || sourcesFromOldConfig || []);
 			tab.permissions = {
 				roles: chatTab.createRolePermissions(tab.permissions?.roles),
 				users: chatTab.createUserPermissions(tab.permissions?.users),
@@ -281,12 +283,12 @@ class TabbedChatTabSettings extends FormApplication {
 		});
 		Object.keys(this.tabs).forEach((key) => {
 			this.tabs[key].sources
-				.filter(source => source.isCore())
-				.forEach(source => {
-					source.label = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.label`)
-					source.hint = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.hint`)
-				})
-		})
+				.filter((source) => source.isCore())
+				.forEach((source) => {
+					source.label = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.label`);
+					source.hint = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.hint`);
+				});
+		});
 
 		Object.keys(this.tabs).forEach((key) => {
 			Object.keys(this.tabs[key].permissions.roles).forEach((id) => {
@@ -320,10 +322,13 @@ class TabbedChatTabSettings extends FormApplication {
 	}
 
 	static getSources(selected = []) {
-		return game.tabbedchat.sources.map(source => new TabbedChatTabSourceSettings({
-			...source,
-			value: selected.includes(source.key),
-		}))
+		return game.tabbedchat.sources.map(
+			(source) =>
+				new TabbedChatTabSourceSettings({
+					...source,
+					value: selected.includes(source.key),
+				})
+		);
 	}
 
 	get tabStructure() {
@@ -379,10 +384,12 @@ class TabbedChatTabSettings extends FormApplication {
 		html.find("a[data-action=add-tab]").on("click", (event) => {
 			this.changeTabs = this.tabs.length;
 			const newTab = deepClone(this.tabStructure);
-			newTab.sources.filter(source => source.isCore()).forEach(source => {
-				source.label = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.label`)
-				source.hint = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.hint`)
-			});
+			newTab.sources
+				.filter((source) => source.isCore())
+				.forEach((source) => {
+					source.label = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.label`);
+					source.hint = game.i18n.localize(`TC.MESSAGE_TYPES.${source.key}.hint`);
+				});
 			Object.keys(newTab.permissions.roles).forEach((id) => {
 				newTab.permissions.roles[id] = {
 					label: this.roles[id],
@@ -464,7 +471,7 @@ class TabbedChatTabSettings extends FormApplication {
 			tabs.push({
 				id,
 				name,
-				sources: game.tabbedchat.sources.filter((source, index) => sources[index]).map(source => source.key),
+				sources: game.tabbedchat.sources.filter((source, index) => sources[index]).map((source) => source.key),
 				permissions,
 			});
 		}
