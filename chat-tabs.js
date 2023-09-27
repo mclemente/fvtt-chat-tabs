@@ -1,19 +1,11 @@
 import { TurndownService } from "./module/TurndownService.js";
 import { ChatTabSource, RW_PERMISSIONS, registerSettings } from "./module/settings.js";
 
-addEventListener("load", (event) => {
-	window.tabbedchat = {
-		register: (key, label = "", hint = "") => {
-			setTimeout(() => game.tabbedchat.register({ key, hint, label }), 0);
-		},
-	};
-});
-
 class ChatTab {
 	constructor({ id, name, permissions = {}, sources = [] }) {
 		this.id = id;
 		this.name = name;
-		this.sources = game.tabbedchat.sources.filter((source) => sources.includes(source.key));
+		this.sources = game.chatTabs.sources.filter((source) => sources.includes(source.key));
 		const roles = this.createRolePermissions(permissions.roles);
 		const users = this.createUserPermissions(permissions.users);
 		this.permissions = {
@@ -184,10 +176,10 @@ class TabbedChatlog {
 
 	initHooks() {
 		Hooks.on("renderChatLog", async function (chatLog, html, user) {
-			if (game.tabbedchat.isStreaming) return;
-			html.prepend(game.tabbedchat.html);
-			game.tabbedchat.bindHTML(html[0]);
-			if (!game.tabbedchat.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
+			if (game.chatTabs.isStreaming) return;
+			html.prepend(game.chatTabs.html);
+			game.chatTabs.bindHTML(html[0]);
+			if (!game.chatTabs.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
 			const tabbedchat = document.querySelector(".tabbedchatlog");
 			tabbedchat.addEventListener("wheel", (event) => {
 				event.preventDefault();
@@ -198,20 +190,20 @@ class TabbedChatlog {
 		});
 
 		Hooks.on("renderChatMessage", (message, html, data) => {
-			if (game.tabbedchat.isStreaming) return;
+			if (game.chatTabs.isStreaming) return;
 
 			if (game.system.id === "pf2e" && message.content.includes(`section class="damage-taken"`)) {
 				html[0].classList.add("emote");
 			}
 
-			if (!game.tabbedchat.currentTab.isMessageVisible(message)) {
+			if (!game.chatTabs.currentTab.isMessageVisible(message)) {
 				html.css({ display: "none" });
 			}
 		});
 
 		Hooks.on("diceSoNiceRollComplete", (messageID) => {
 			const message = game.messages.find((message) => message.id === messageID);
-			game.tabbedchat.currentTab.handle(message);
+			game.chatTabs.currentTab.handle(message);
 		});
 
 		Hooks.on("createChatMessage", (message, options, userId) => {
@@ -219,7 +211,7 @@ class TabbedChatlog {
 			messageTabs.forEach((tab) => tab.setNotification());
 
 			if (messageTabs.length && game.settings.get("chat-tabs", "autoNavigate")) {
-				game.tabbedchat.tabsController.activate(messageTabs[0].id, { triggerCallback: true });
+				game.chatTabs.tabsController.activate(messageTabs[0].id, { triggerCallback: true });
 			}
 		});
 
@@ -232,8 +224,8 @@ class TabbedChatlog {
 			if (
 				game.settings.get("chat-tabs", "icChatInOoc") &&
 				chatMessage.type == CONST.CHAT_MESSAGE_TYPES.IC &&
-				game.tabbedchat.currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.OOC) &&
-				!game.tabbedchat.currentTab.isMessageTypeVisible(chatMessage.type)
+				game.chatTabs.currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.OOC) &&
+				!game.chatTabs.currentTab.isMessageTypeVisible(chatMessage.type)
 			) {
 				chatMessage._source.type = CONST.CHAT_MESSAGE_TYPES.OOC;
 				chatMessage.type = CONST.CHAT_MESSAGE_TYPES.OOC;
@@ -292,7 +284,7 @@ class TabbedChatlog {
 						img = game.data.addresses.remote + img;
 					}
 					sendToDiscord(webhook, {
-						content: game.tabbedchat.turndown.turndown(message),
+						content: game.chatTabs.turndown.turndown(message),
 						username: chatMessage.alias,
 						avatar_url: encodeURI(img),
 						embeds,
@@ -458,7 +450,7 @@ Hooks.on("init", () => {
 				yes: () => {
 					ChatMessage.deleteDocuments(
 						[...game.messages]
-							.filter((entity) => game.tabbedchat.currentTab.isMessageVisible(entity))
+							.filter((entity) => game.chatTabs.currentTab.isMessageVisible(entity))
 							.map((message) => message.id)
 					);
 					if (game.version >= 11) {
@@ -474,15 +466,13 @@ Hooks.on("init", () => {
 		},
 		"OVERRIDE"
 	);
-});
-
-Hooks.on("init", () => {
 	registerSettings();
-	game.tabbedchat = new TabbedChatlog();
+	game.tabbedchat = game.chatTabs = new TabbedChatlog();
+	Hooks.callAll("chat-tabs.init");
 });
 
 Hooks.on("setup", () => {
-	game.tabbedchat.setup();
+	game.chatTabs.setup();
 });
 
 Hooks.on("ready", () => {

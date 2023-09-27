@@ -8,9 +8,9 @@ You can set the message types that will show up on each tab, and you can set mes
 
 ## To integrate with Customizable Chat Tabs
 
-Your module should call on `init` hook `window.tabbedchat.register(key: string, name?: string, desctipion?: string)` function.
+Your module should call on `chat-tabs` hook `game.chatTabs.register(key: string, name?: string, desctipion?: string)` function.
 
-Arguments:\
+Arguments:
 
 -   `key` - name of you module
 -   `name` - user friendly name. It will show in settings
@@ -19,8 +19,8 @@ Arguments:\
 Example:
 
 ```javascript
-Hooks.on("init", () => {
-	window.tabbedchat.register("custom-module", "Custom module", "My custom module");
+Hooks.on("chat-tabs.init", () => {
+	game.chatTabs.register("custom-module", "Custom module", "My custom module");
 });
 ```
 

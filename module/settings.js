@@ -70,7 +70,7 @@ export function registerSettings() {
 		default: true,
 		type: Boolean,
 		onChange: () => {
-			game.tabbedchat.tabsController.activate(game.tabbedchat.currentTab.id, { triggerCallback: true });
+			game.chatTabs.tabsController.activate(game.chatTabs.currentTab.id, { triggerCallback: true });
 		},
 	});
 
@@ -91,7 +91,7 @@ export function registerSettings() {
 		default: false,
 		type: Boolean,
 		onChange: () => {
-			game.tabbedchat.tabsController.activate(game.tabbedchat.currentTab.id, { triggerCallback: true });
+			game.chatTabs.tabsController.activate(game.chatTabs.currentTab.id, { triggerCallback: true });
 		},
 	});
 
@@ -182,8 +182,8 @@ export class ChatTabSource {
 		}
 
 		const messageForTabID = message.flags["chat-tabs"]?.tabExclusive;
-		const messageForTab = messageForTabID && game.tabbedchat.tabs[messageForTabID];
-		const messageForCurrentTab = messageForTabID && game.tabbedchat.currentTab.id === messageForTabID;
+		const messageForTab = messageForTabID && game.chatTabs.tabs[messageForTabID];
+		const messageForCurrentTab = messageForTabID && game.chatTabs.currentTab.id === messageForTabID;
 		return !messageForTab || messageForCurrentTab;
 	}
 
@@ -232,7 +232,7 @@ class ChatTabSourceOther extends ChatTabSource {
 	 * @returns {Boolean}
 	 */
 	canShowMessage(message) {
-		const hasSource = game.tabbedchat.sources
+		const hasSource = game.chatTabs.sources
 			.filter((source) => source.key !== this.key)
 			.find(
 				(source) =>
@@ -260,7 +260,7 @@ class TabbedChatTabSettings extends FormApplication {
 
 	init() {
 		this.tabs = deepClone(game.settings.get("chat-tabs", "tabs"));
-		const chatTab = game.tabbedchat.chatTab.prototype;
+		const chatTab = game.chatTabs.chatTab.prototype;
 		this.tabs.forEach((tab) => {
 			const sourcesFromOldConfig =
 				tab.messageTypes && Object.keys(tab.messageTypes).filter((key) => tab.messageTypes[key]);
@@ -322,7 +322,7 @@ class TabbedChatTabSettings extends FormApplication {
 	}
 
 	static getSources(selected = []) {
-		return game.tabbedchat.sources.map(
+		return game.chatTabs.sources.map(
 			(source) =>
 				new TabbedChatTabSourceSettings({
 					...source,
@@ -332,7 +332,7 @@ class TabbedChatTabSettings extends FormApplication {
 	}
 
 	get tabStructure() {
-		const chatTab = game.tabbedchat.chatTab.prototype;
+		const chatTab = game.chatTabs.chatTab.prototype;
 		return {
 			id: randomID(),
 			name: game.i18n.localize("TC.TABS.NewTab"),
@@ -471,7 +471,7 @@ class TabbedChatTabSettings extends FormApplication {
 			tabs.push({
 				id,
 				name,
-				sources: game.tabbedchat.sources.filter((source, index) => sources[index]).map((source) => source.key),
+				sources: game.chatTabs.sources.filter((source, index) => sources[index]).map((source) => source.key),
 				permissions,
 			});
 		}
