@@ -107,7 +107,6 @@ class ChatTab {
 	}
 
 	setNotification() {
-		const nTabs = $("nav.tabbedchatlog.tabs > a.item").length;
 		$(`#${this.id}Notification`).css({ display: "" });
 	}
 
@@ -125,7 +124,7 @@ class ChatTab {
 	 * @param {Object} message
 	 */
 	show(message) {
-		return this.setMessageDisplay(message.id, "");
+		return this.setMessageDisplay(message.id);
 	}
 
 	/**
