@@ -194,8 +194,8 @@ export class ChatTabSource {
 
 	_canShowMessageByFlags(message) {
 		return this.isCore()
-			? !message.flags?.["chat-tabs"]?.["module"]
-			: message.flags?.["chat-tabs"]?.["module"] === this.key.replace("module.", "");
+			? !message.getFlag("chat-tabs", "module")
+			: message.getFlag("chat-tabs", "module") === this.key.replace("module.", "");
 	}
 
 	/**
