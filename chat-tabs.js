@@ -207,7 +207,11 @@ class TabbedChatlog {
 
 		Hooks.on("createChatMessage", (message, options, userId) => {
 			const messageTabs = this.tabs.filter((tab) => tab.isMessageVisible(message));
-			messageTabs.forEach((tab) => tab.setNotification());
+			if (!game.chatTabs.currentTab.isMessageVisible(message)) {
+				messageTabs.forEach((tab) => {
+					tab.setNotification();
+				});
+			}
 
 			if (messageTabs.length && game.settings.get("chat-tabs", "autoNavigate")) {
 				game.chatTabs.tabsController.activate(messageTabs[0].id, { triggerCallback: true });
