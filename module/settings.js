@@ -220,13 +220,10 @@ export class ChatTabSource {
 	 * @returns {Boolean}
 	 */
 	_canShowMessageInScene(message) {
-		if (!game.settings.get("chat-tabs", "perScene")) {
-			return true;
-		}
-
 		const messageFromScene = [CONST.CHAT_MESSAGE_TYPES.IC, CONST.CHAT_MESSAGE_TYPES.EMOTE].includes(message.type);
-		const sceneNotChanged = message.speaker.scene && message.speaker.scene === game.user.viewedScene;
-		return !messageFromScene || sceneNotChanged;
+		const hasScene = Boolean(message.speaker.scene);
+		const isViewedScene = message.speaker.scene === game.user.viewedScene;
+		return !game.settings.get("chat-tabs", "perScene") || !messageFromScene || !hasScene || isViewedScene;
 	}
 
 	/**
