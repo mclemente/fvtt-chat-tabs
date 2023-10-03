@@ -150,7 +150,7 @@ class ChatTab {
 	get html() {
 		if (!this.isTabVisible()) return "";
 		return `
-		<a class="item ${this.id}" data-tab="${this.id}">
+		<a class="item" data-tab="${this.id}">
 			${this.name}
 			<i id="${this.id}Notification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
 		</a>`;
@@ -190,19 +190,47 @@ class TabbedChatlog {
 
 		Hooks.on("renderChatMessage", (message, html, data) => {
 			if (game.chatTabs.isStreaming) return;
+			html[0].setAttribute("data-tc-type", message.type);
+			if (
+				[
+					CONST.CHAT_MESSAGE_TYPES.OTHER,
+					CONST.CHAT_MESSAGE_TYPES.IC,
+					CONST.CHAT_MESSAGE_TYPES.EMOTE,
+					CONST.CHAT_MESSAGE_TYPES.ROLL,
+				].includes(message.type) &&
+				message.speaker.scene != undefined &&
+				game.settings.get("chat-tabs", "perScene")
+			) {
+				html[0].setAttribute("data-tc-scene", message.speaker.scene);
+			}
+
+			// Set tab-exclusivity
+			let tabKey = "";
+
+			// If message is from a valid module tab
+			if (message.getFlag("chat-tabs", "module")) {
+				tabKey ||= getValidTab(message)?.id;
+				html[0].setAttribute("data-tc-module", tabKey);
+			}
+			// If it isn't...
+			tabKey ||= message.getFlag("chat-tabs", "tabExclusive");
+			if (tabKey) {
+				html[0].setAttribute("data-tc-tab", tabKey);
+			}
 
 			if (game.system.id === "pf2e" && message.content.includes(`section class="damage-taken"`)) {
 				html[0].classList.add("emote");
 			}
-
 			if (!game.chatTabs.currentTab.isMessageVisible(message)) {
 				html.css({ display: "none" });
 			}
 		});
 
 		Hooks.on("diceSoNiceRollComplete", (messageID) => {
-			const message = game.messages.find((message) => message.id === messageID);
-			game.chatTabs.currentTab.handle(message);
+			const currentTab = game.tabbedchat.currentTab;
+			if (!currentTab.isMessageTypeVisible(CONST.CHAT_MESSAGE_TYPES.ROLL)) {
+				$(`#chat-log .message[data-message-id=${messageID}]`).css({ display: "none" });
+			}
 		});
 
 		Hooks.on("createChatMessage", (message, options, userId) => {
@@ -244,12 +272,20 @@ class TabbedChatlog {
 				chatMessage._source.speaker = speaker;
 			}
 
+			if (chatMessage.getFlag("chat-tabs", "module")) {
+				const validTab = getValidTab(chatMessage);
+				if (validTab) chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: validTab.id });
+			}
+
 			if (chatMessage.whisper?.length) return;
+
+			// Add tab-exclusivity
+			const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
+			const tabExclusiveOOC = tabExclusive && game.settings.get("chat-tabs", "tabExclusiveOOC");
 			const isValidMessageType =
-				(game.settings.get("chat-tabs", "tabExclusiveOOC") &&
-					chatMessage.type === CONST.CHAT_MESSAGE_TYPES.OOC) ||
-				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC ||
-				chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER;
+				(tabExclusiveOOC && chatMessage.type === CONST.CHAT_MESSAGE_TYPES.OOC) ||
+				(chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
+					chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER);
 			if (!isValidMessageType) return;
 			const isValidTab = Boolean(
 				game.chatTabs.currentTab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
@@ -257,18 +293,18 @@ class TabbedChatlog {
 			if (isValidTab) {
 				chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: game.chatTabs.currentTab.id });
 			} else {
-				const validTab = game.chatTabs.tabs.find((tab) =>
-					tab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
-				);
+				const validTab = getValidTab(chatMessage);
 				if (validTab) chatMessage.updateSource({ ["flags.chat-tabs.tabExclusive"]: validTab.id });
 			}
+
+			// Handle Webhooks
 			try {
 				const WEBHOOKS = {
 					scene: game.scenes.get(chatMessage.speaker.scene)?.getFlag("chat-tabs", "webhook") ?? "",
 					backupIC: game.settings.get("chat-tabs", "icBackupWebhook"),
 					OOC: game.settings.get("chat-tabs", "oocWebhook"),
 				};
-				if (Object.values(WEBHOOKS).every((v) => v === "")) return;
+				if (Object.values(WEBHOOKS).every((hook) => hook === "")) return;
 				let webhook, message, img, embeds;
 				const sendRoll = chatMessage.isRoll && game.settings.get("chat-tabs", "rollsToWebhook");
 				if (
@@ -337,6 +373,16 @@ class TabbedChatlog {
 		this._currentTab = tab;
 	}
 
+	getTabByID(tabId) {
+		if (typeof tabId !== "string") {
+			throw new Error("Customizable Chat Tabs | getTabByID: tabId must be a string");
+		}
+		for (const tab of this.tabs) {
+			if (tab.id === tabId) return tab;
+		}
+		return null;
+	}
+
 	bindHTML(html) {
 		this.tabsController = new TabsV2({
 			navSelector: ".tabs",
@@ -344,7 +390,85 @@ class TabbedChatlog {
 			initial: "ic",
 			callback: (event, html, tabName) => {
 				this.currentTab = tabName;
-				game.messages.forEach((message) => this.currentTab.handle(message));
+
+				const setVisibility = (selector, messageType) => {
+					const display = this.currentTab.isMessageTypeVisible(messageType) ? "" : "none";
+					const perScene = game.settings.get("chat-tabs", "perScene");
+					const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
+					const validExclusiveTypes = [
+						CONST.CHAT_MESSAGE_TYPES.IC,
+						CONST.CHAT_MESSAGE_TYPES.EMOTE,
+						CONST.CHAT_MESSAGE_TYPES.ROLL,
+					];
+
+					// Add OOC as valid if enabled
+					if (tabExclusive && game.settings.get("chat-tabs", "tabExclusiveOOC")) {
+						validExclusiveTypes.push(CONST.CHAT_MESSAGE_TYPES.OOC);
+					}
+
+					// Check Exclusivity
+					if (validExclusiveTypes.includes(messageType) && (perScene || tabExclusive)) {
+						// selector.filter(".scene" + game.user.viewedScene).css({ display: visible });
+
+						// Scene Exclusive, NOT Tab Exclusive
+						if (perScene && !tabExclusive) {
+							selector.filter(`[data-tc-scene]`).css({ display: "none" });
+							selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display });
+						}
+						// Tab Exclusive, NOT Scene Exclusive
+						else if (!perScene && tabExclusive) {
+							selector.filter(`[data-tc-tab]`).css({ display: "none" });
+							selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display });
+						}
+						// Scene Exclusive AND Tab Exclusive
+						else if (perScene && tabExclusive) {
+							selector.filter(`[data-tc-scene]`).css({ display: "none" });
+							selector.filter(`[data-tc-tab]`).css({ display: "none" });
+							selector
+								.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`)
+								.css({ display });
+							const messages = selector.filter(
+								`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab!=${this.currentTab.id}]`
+							);
+							for (let message of messages) {
+								const tabId = message.dataset.tcTab ?? "";
+								if (tabId && !this.getTabByID(tabId)) {
+									selector
+										.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab="${tabId}"]`)
+										.css({ display });
+								}
+							}
+						}
+						// Hide GM Rolls
+						if (messageType === CONST.CHAT_MESSAGE_TYPES.ROLL) {
+							selector.filter(".gm-roll-hidden").attr("hidden", true);
+						}
+					}
+					// Check non-exclusives (OTHER, OOC, WHISPER)
+					else {
+						selector.css({ display });
+						// Remove module-specific messages
+						selector.filter(`[data-tc-module]`).css({ display: "none" });
+						const messages = selector.filter(`[data-tc-module!="${this.currentTab.id}"]`);
+						for (let message of messages) {
+							const tabId = message.dataset.tcModule ?? "";
+							if (tabId && !this.getTabByID(tabId)) {
+								selector.filter(`[data-tc-module=${tabId}]`).css({ display });
+							}
+						}
+					}
+				};
+
+				Object.values(CONST.CHAT_MESSAGE_TYPES).forEach((value) => {
+					const selector = $(`[data-tc-type=${value}]`);
+					if (selector.length) {
+						setVisibility(selector, value);
+						if (this.currentTab.sources.find((source) => !source.isCore())) {
+							selector.filter(`[data-tc-module=${this.currentTab.id}]`).css({ display: "" });
+						}
+					}
+				});
+
 				if (!this.currentTab.canUserWrite()) $("#chat-message").prop("disabled", true);
 				else if ($("#chat-message").is(":disabled")) $("#chat-message").prop("disabled", false);
 
@@ -423,6 +547,12 @@ function loadActorForChatMessage(speaker) {
 
 function generatePortraitImageElement(actor) {
 	return actor.token ? actor.token.texture.src : actor.img;
+}
+
+function getValidTab(chatMessage) {
+	return game.chatTabs.tabs.find((tab) =>
+		tab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
+	);
 }
 
 Hooks.on("renderSceneConfig", (app, html, data) => {
