@@ -603,10 +603,8 @@ Hooks.on("init", () => {
 							.filter((entity) => game.chatTabs.currentTab.isMessageVisible(entity))
 							.map((message) => message.id)
 					);
-					if (game.version >= 11) {
-						const jumpToBottomElement = document.querySelector(".jump-to-bottom");
-						jumpToBottomElement.classList.toggle("hidden", true);
-					}
+					const jumpToBottomElement = document.querySelector(".jump-to-bottom");
+					jumpToBottomElement.classList.toggle("hidden", true);
 				},
 				options: {
 					top: window.innerHeight - 150,
