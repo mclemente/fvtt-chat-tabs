@@ -280,13 +280,7 @@ class TabbedChatlog {
 			if (chatMessage.whisper?.length) return;
 
 			// Add tab-exclusivity
-			const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
-			const tabExclusiveOOC = tabExclusive && game.settings.get("chat-tabs", "tabExclusiveOOC");
-			const isValidMessageType =
-				(tabExclusiveOOC && chatMessage.type === CONST.CHAT_MESSAGE_TYPES.OOC) ||
-				(chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.OOC &&
-					chatMessage.type !== CONST.CHAT_MESSAGE_TYPES.WHISPER);
-			if (!isValidMessageType) return;
+			if (chatMessage.type === CONST.CHAT_MESSAGE_TYPES.WHISPER) return;
 			const isValidTab = Boolean(
 				game.chatTabs.currentTab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
 			);
@@ -396,13 +390,18 @@ class TabbedChatlog {
 					const perScene = game.settings.get("chat-tabs", "perScene");
 					const tabExclusive = game.settings.get("chat-tabs", "tabExclusive");
 					const validExclusiveTypes = [
+						CONST.CHAT_MESSAGE_TYPES.OTHER,
 						CONST.CHAT_MESSAGE_TYPES.IC,
 						CONST.CHAT_MESSAGE_TYPES.EMOTE,
 						CONST.CHAT_MESSAGE_TYPES.ROLL,
 					];
 
 					// Add OOC as valid if enabled
-					if (tabExclusive && game.settings.get("chat-tabs", "tabExclusiveOOC")) {
+					const tabExclusiveOOC =
+						tabExclusive &&
+						game.settings.get("chat-tabs", "tabExclusiveOOC") &&
+						messageType === CONST.CHAT_MESSAGE_TYPES.OOC;
+					if (tabExclusiveOOC) {
 						validExclusiveTypes.push(CONST.CHAT_MESSAGE_TYPES.OOC);
 					}
 
@@ -419,6 +418,19 @@ class TabbedChatlog {
 						else if (!perScene && tabExclusive) {
 							selector.filter(`[data-tc-tab]`).css({ display: "none" });
 							selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display });
+						}
+						// Scene Exclusive AND Tab Exclusive AND message is OOC AND is visible
+						else if (tabExclusiveOOC && !display) {
+							selector.filter(`[data-tc-scene]`).css({ display: "none" });
+							selector.filter(`[data-tc-tab]`).css({ display: "none" });
+							selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display });
+							const messages = selector.filter(`[data-tc-tab!=${this.currentTab.id}]`);
+							for (let message of messages) {
+								const tabId = message.dataset.tcTab ?? "";
+								if (tabId && !this.getTabByID(tabId)) {
+									selector.filter(`[data-tc-tab="${tabId}"]`).css({ display });
+								}
+							}
 						}
 						// Scene Exclusive AND Tab Exclusive
 						else if (perScene && tabExclusive) {
