@@ -1,3 +1,9 @@
+![GitHub release](https://img.shields.io/github/release-date/mclemente/fvtt-chat-tabs)
+![GitHub release (latest by SemVer and asset)](https://img.shields.io/github/downloads/mclemente/fvtt-chat-tabs/latest/module.zip)
+
+[![ko-fi](https://img.shields.io/badge/ko--fi-Support%20Me-red?style=flat-square&logo=ko-fi)](https://ko-fi.com/mclemente)
+
+
 # Customizable Chat Tabs
 
 Splits the Chatlog into tabs that can be customized.
