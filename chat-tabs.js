@@ -411,8 +411,13 @@ class TabbedChatlog {
 
 						// Scene Exclusive, NOT Tab Exclusive
 						if (perScene && !tabExclusive) {
-							selector.filter(`[data-tc-scene]`).css({ display: "none" });
-							selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display });
+							if (!game.user.viewedScene) {
+								selector.css({ display });
+								selector.filter(`[data-tc-scene]`).css({ display: "none" });
+							} else {
+								selector.filter(`[data-tc-scene]`).css({ display: "none" });
+								selector.filter(`[data-tc-scene="${game.user.viewedScene}"]`).css({ display });
+							}
 						}
 						// Tab Exclusive, NOT Scene Exclusive
 						else if (!perScene && tabExclusive) {
@@ -436,9 +441,18 @@ class TabbedChatlog {
 						else if (perScene && tabExclusive) {
 							selector.filter(`[data-tc-scene]`).css({ display: "none" });
 							selector.filter(`[data-tc-tab]`).css({ display: "none" });
-							selector
-								.filter(`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`)
-								.css({ display });
+							if (!game.user.viewedScene) {
+								selector.filter(`[data-tc-tab=${this.currentTab.id}]`).css({ display });
+								selector
+									.filter(`[data-tc-scene][data-tc-tab=${this.currentTab.id}]`)
+									.css({ display: "none" });
+							} else {
+								selector
+									.filter(
+										`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab=${this.currentTab.id}]`
+									)
+									.css({ display });
+							}
 							const messages = selector.filter(
 								`[data-tc-scene="${game.user.viewedScene}"][data-tc-tab!=${this.currentTab.id}]`
 							);
