@@ -445,7 +445,7 @@ class TabbedChatTabSettings extends FormApplication {
 		const data = expandObject(original);
 		const tabs = [];
 		for (const key in data.tabs) {
-			let { id, name, sources, permissions } = data.tabs[key];
+			let { id, name, webhook, sources, permissions } = data.tabs[key];
 			permissions.roles = Object.assign(
 				...Object.keys(permissions.roles).map((key) => ({
 					[key]: Number(permissions.roles[key]),
@@ -461,6 +461,7 @@ class TabbedChatTabSettings extends FormApplication {
 			tabs.push({
 				id,
 				name,
+				webhook,
 				sources: game.chatTabs.sources.filter((source, index) => sources[index]).map((source) => source.key),
 				permissions,
 			});
