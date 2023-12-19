@@ -2,9 +2,10 @@ import { TurndownService } from "./module/TurndownService.js";
 import { ChatTabSource, RW_PERMISSIONS, registerSettings, renderSettingsConfigHandler } from "./module/settings.js";
 
 class ChatTab {
-	constructor({ id, name, permissions = {}, sources = [] }) {
+	constructor({ id, name, webhook, permissions = {}, sources = [] }) {
 		this.id = id;
 		this.name = name;
+		this.webhook = webhook;
 		this.sources = game.chatTabs.sources.filter((source) => sources.includes(source.key));
 		const roles = this.createRolePermissions(permissions.roles);
 		const users = this.createUserPermissions(permissions.users);
@@ -294,6 +295,7 @@ class TabbedChatlog {
 			// Handle Webhooks
 			try {
 				const WEBHOOKS = {
+					tab: game.chatTabs.currentTab.webhook,
 					scene: game.scenes.get(chatMessage.speaker.scene)?.getFlag("chat-tabs", "webhook") ?? "",
 					backupIC: game.settings.get("chat-tabs", "icBackupWebhook"),
 					OOC: game.settings.get("chat-tabs", "oocWebhook"),
@@ -306,7 +308,7 @@ class TabbedChatlog {
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.EMOTE ||
 					(sendRoll && chatMessage.speaker.actor)
 				) {
-					webhook = WEBHOOKS.scene || WEBHOOKS.backupIC;
+					webhook = WEBHOOKS.tab || WEBHOOKS.scene || WEBHOOKS.backupIC;
 					if (!webhook) return;
 
 					const speaker = chatMessage.speaker;
@@ -316,7 +318,7 @@ class TabbedChatlog {
 					chatMessage.type == CONST.CHAT_MESSAGE_TYPES.OOC ||
 					(sendRoll && !chatMessage.speaker.actor)
 				) {
-					webhook = WEBHOOKS.OOC;
+					webhook = WEBHOOKS.tab || WEBHOOKS.OOC;
 					if (!webhook) return;
 
 					img = chatMessage.user.avatar;
