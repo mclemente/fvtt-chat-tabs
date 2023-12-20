@@ -547,7 +547,7 @@ function sendToDiscord(webhook, body) {
 }
 
 function convertPolyglotMessage(chatMessage) {
-	const lang = chatMessage.getFlag("polyglot", "language");
+	const lang = chatMessage.getFlag("polyglot", "language") || game.polyglot.defaultLanguage;
 	let message = chatMessage.content;
 	if (lang !== game.polyglot.defaultLanguage) {
 		message = game.polyglot.languages[lang].label + ": ||" + message + "||";
