@@ -579,7 +579,7 @@ function generatePortraitImageElement(actor) {
 
 function getValidTab(chatMessage) {
 	return game.chatTabs.tabs.find((tab) =>
-		tab.sources.find((source) => source.canShowMessageNonExclusively(chatMessage))
+		tab.sources.find((source) => tab.permissions.users[chatMessage.user._id] === 2 && source.canShowMessageNonExclusively(chatMessage))
 	);
 }
 
